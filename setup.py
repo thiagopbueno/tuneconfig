@@ -15,6 +15,7 @@ setup(
     author_email='thiago.pbueno@gmail.com',
     description='Hyperparameter config file generator.',
     long_description=read('README.md'),
+    long_description_content_type="text/markdown",
     license='GNU General Public License v3.0',
     keywords=['hyperparameter-tuning', 'grid-search-hyperparameter'],
     url='https://github.com/thiagopbueno/tuneconfig',
