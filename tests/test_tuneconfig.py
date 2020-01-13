@@ -54,3 +54,11 @@ def test_tune_config_dump(config):
         with open(filepath, "r") as file:
             assert params_config == json.load(file)
 
+
+def test_tune_config_len(config):
+    assert len(config) == 18
+
+
+def test_tune_config_get_item(config):
+    for index, params_config in enumerate(config):
+        assert config[index] == params_config

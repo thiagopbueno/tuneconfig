@@ -21,7 +21,6 @@ class TuneConfig:
     def __init__(self, config_dict):
         self._config_dict = config_dict
 
-    def __iter__(self):
         self._base_dict = {}
         self._params_iterators = {}
 
@@ -34,8 +33,20 @@ class TuneConfig:
         self._params = self._params_iterators.keys()
         self._values = self._params_iterators.values()
         self._value_instantiations = list(itertools.product(*self._values))
-        self._index = 0
 
+    def __len__(self):
+        return len(self._value_instantiations)
+
+    def __getitem__(self, i):
+        values = self._value_instantiations[i]
+
+        return {
+            **self._base_dict,
+            **dict(zip(self._params, values))
+        }
+
+    def __iter__(self):
+        self._index = 0
         return self
 
     def __next__(self):
@@ -45,12 +56,7 @@ class TuneConfig:
         if i == len(self._value_instantiations):
             raise StopIteration
 
-        values = self._value_instantiations[i]
-
-        return {
-            **self._base_dict,
-            **dict(zip(self._params, values))
-        }
+        return self[i]
 
     def dump(self, dirpath, subfolders=True):
         basepath = dirpath
