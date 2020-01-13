@@ -19,22 +19,81 @@ import tuneconfig
 
 # Define a configuration template for grid search
 config_template = tuneconfig.TuneConfig({
-    "batch_size": tuneconfig.grid_search([32, 64, 128]),
+    "batch_size": tuneconfig.grid_search([32, 128]),
     "horizon": 40,
     "learning_rate": tuneconfig.grid_search([0.01, 0.1]),
     "epochs": 1000,
-    "optimizer": tuneconfig.grid_search(["Adam", "RMSProp", "GradientDescent"])
+    "optimizer": tuneconfig.grid_search(["Adam", "RMSProp"])
 })
 
 # Iterate over config dicts
 for idx, config in enumerate(config_template):
-    print(f"config #{idx} =")
+    name = config_template[idx]["name"]
+    print(f"config {idx} ({name}):")
     pprint.pprint(config)
     print()
 
 # Dump config dicts as JSON files
 tmp = "/tmp/tuneconfig"
 config_template.dump(dirpath=tmp, subfolders=True)
+```
+
+```bash
+config #0 (batch_size=32/learning_rate=0.01/optimizer=Adam):
+{'batch_size': 32,
+ 'epochs': 1000,
+ 'horizon': 40,
+ 'learning_rate': 0.01,
+ 'optimizer': 'Adam'}
+
+config #1 (batch_size=32/learning_rate=0.01/optimizer=RMSProp):
+{'batch_size': 32,
+ 'epochs': 1000,
+ 'horizon': 40,
+ 'learning_rate': 0.01,
+ 'optimizer': 'RMSProp'}
+
+config #2 (batch_size=32/learning_rate=0.1/optimizer=Adam):
+{'batch_size': 32,
+ 'epochs': 1000,
+ 'horizon': 40,
+ 'learning_rate': 0.1,
+ 'optimizer': 'Adam'}
+
+config #3 (batch_size=32/learning_rate=0.1/optimizer=RMSProp):
+{'batch_size': 32,
+ 'epochs': 1000,
+ 'horizon': 40,
+ 'learning_rate': 0.1,
+ 'optimizer': 'RMSProp'}
+
+config #4 (batch_size=128/learning_rate=0.01/optimizer=Adam):
+{'batch_size': 128,
+ 'epochs': 1000,
+ 'horizon': 40,
+ 'learning_rate': 0.01,
+ 'optimizer': 'Adam'}
+
+config #5 (batch_size=128/learning_rate=0.01/optimizer=RMSProp):
+{'batch_size': 128,
+ 'epochs': 1000,
+ 'horizon': 40,
+ 'learning_rate': 0.01,
+ 'optimizer': 'RMSProp'}
+
+config #6 (batch_size=128/learning_rate=0.1/optimizer=Adam):
+{'batch_size': 128,
+ 'epochs': 1000,
+ 'horizon': 40,
+ 'learning_rate': 0.1,
+ 'optimizer': 'Adam'}
+
+config #7 (batch_size=128/learning_rate=0.1/optimizer=RMSProp):
+{'batch_size': 128,
+ 'epochs': 1000,
+ 'horizon': 40,
+ 'learning_rate': 0.1,
+ 'optimizer': 'RMSProp'}
 ```
 
 

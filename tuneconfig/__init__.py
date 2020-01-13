@@ -18,8 +18,9 @@ class ParamsIterator:
 
 class TuneConfig:
 
-    def __init__(self, config_dict):
+    def __init__(self, config_dict, format_func=None):
         self._config_dict = config_dict
+        self._format_func = format_func
 
         self._base_dict = {}
         self._params_iterators = {}
@@ -40,9 +41,20 @@ class TuneConfig:
     def __getitem__(self, i):
         values = self._value_instantiations[i]
 
+        name = []
+        for param, value in zip(self._params, values):
+            if self._format_func:
+                param = self._format_func(param)
+            name.append(f"{param}={value}")
+        name = '/'.join(name)
+
         return {
-            **self._base_dict,
-            **dict(zip(self._params, values))
+            "index": i,
+            "name": name,
+            "value": {
+                **self._base_dict,
+                **dict(zip(self._params, values))
+            }
         }
 
     def __iter__(self):
@@ -56,7 +68,7 @@ class TuneConfig:
         if i == len(self._value_instantiations):
             raise StopIteration
 
-        return self[i]
+        return self[i]["value"]
 
     def dump(self, dirpath, subfolders=True):
         basepath = dirpath
