@@ -43,10 +43,13 @@ def test_tune_config_iterator(config):
 def test_tune_config_dump(config):
     tmp = "/tmp/tuneconfig"
 
-    config.dump(tmp, subfolders=True)
+    filepaths = config.dump(tmp, subfolders=True)
+    assert len(filepaths) == len(config)
+
     for index, params_config in enumerate(config):
         dirpath = os.path.join(tmp, str(index))
         filepath = os.path.join(dirpath, "config.json")
+        assert filepaths[index] == filepath
         assert os.path.exists(dirpath)
         assert os.path.exists(filepath)
         assert os.path.isfile(filepath)
@@ -54,10 +57,13 @@ def test_tune_config_dump(config):
         with open(filepath, "r") as file:
             assert params_config == json.load(file)
 
-    config.dump(tmp, subfolders=False)
+    filepaths = config.dump(tmp, subfolders=False)
+    assert len(filepaths) == len(config)
+
     for index, params_config in enumerate(config):
         dirpath = tmp
         filepath = os.path.join(dirpath, f"config{index}.json")
+        assert filepaths[index] == filepath
         assert os.path.exists(dirpath)
         assert os.path.exists(filepath)
         assert os.path.isfile(filepath)

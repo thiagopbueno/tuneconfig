@@ -71,6 +71,8 @@ class TuneConfig:
         return self[i]["value"]
 
     def dump(self, dirpath, subfolders=True):
+        json_files_created = []
+
         basepath = dirpath
         for index, params_config in enumerate(self):
 
@@ -88,3 +90,6 @@ class TuneConfig:
 
             with open(filepath, "w") as file:
                 json.dump(params_config, file)
+                json_files_created.append(filepath)
+
+        return json_files_created
