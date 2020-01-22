@@ -25,14 +25,17 @@ class TuneConfig:
         self._base_dict = {}
         self._params_iterators = {}
 
-        for key, value in self._config_dict.items():
-            if isinstance(value, ParamsIterator):
-                self._params_iterators[key] = list(value)
-            else:
-                self._base_dict[key] = value
+        for param, value in self._config_dict.items():
+            if self._format_func is not None:
+                param = self._format_func(param)
 
-        self._params = self._params_iterators.keys()
-        self._values = self._params_iterators.values()
+            if isinstance(value, ParamsIterator):
+                self._params_iterators[param] = list(value)
+            else:
+                self._base_dict[param] = value
+
+        self._params = list(self._params_iterators.keys())
+        self._values = list(self._params_iterators.values())
         self._value_instantiations = list(itertools.product(*self._values))
 
     def __len__(self):
@@ -40,21 +43,9 @@ class TuneConfig:
 
     def __getitem__(self, i):
         values = self._value_instantiations[i]
-
-        name = []
-        for param, value in zip(self._params, values):
-            if self._format_func:
-                param = self._format_func(param)
-            name.append(f"{param}={value}")
-        name = '/'.join(name)
-
         return {
-            "index": i,
-            "name": name,
-            "value": {
-                **self._base_dict,
-                **dict(zip(self._params, values))
-            }
+            **self._base_dict,
+            **dict(zip(self._params, values))
         }
 
     def __iter__(self):
@@ -68,28 +59,41 @@ class TuneConfig:
         if i == len(self._value_instantiations):
             raise StopIteration
 
-        return self[i]["value"]
+        return self[i]
 
-    def dump(self, dirpath, subfolders=True):
+    def name(self, config):
+        assignments = []
+        for param in sorted(config):
+            if param not in self._params:
+                continue
+            value = config[param]
+            assignments.append(f"{param}={value}")
+        return '/'.join(assignments)
+
+    def full_name(self, config):
+        assignments = []
+        for param in sorted(config):
+            value = config[param]
+            assignments.append(f"{param}={value}")
+        return '/'.join(assignments)
+
+    def dump(self, basepath, fullname=True):
         json_files_created = []
 
-        basepath = dirpath
-        for index, params_config in enumerate(self):
+        for config in self:
 
-            if subfolders:
-                dirpath = os.path.join(basepath, str(index))
-                filename = "config.json"
-            else:
-                dirpath = basepath
-                filename = f"config{index}.json"
+            experiment_id = self.full_name(config) if fullname else self.name(config)
+
+            dirpath = os.path.join(basepath, experiment_id)
 
             if not os.path.exists(dirpath):
                 os.makedirs(dirpath)
 
+            filename = "config.json"
             filepath = os.path.join(dirpath, filename)
 
             with open(filepath, "w") as file:
-                json.dump(params_config, file)
+                json.dump(config, file)
                 json_files_created.append(filepath)
 
         return json_files_created

@@ -7,7 +7,7 @@ import tuneconfig
 
 
 @pytest.fixture(scope="module")
-def config():
+def pconfig():
     def format_func(param):
         fmt = {
             "batch_size": "batch",
@@ -34,54 +34,76 @@ def test_grid_search():
     assert list(values) == values._lst
 
 
-def test_tune_config_iterator(config):
-    for params_config in config:
-        assert isinstance(params_config, dict)
-        assert len(params_config) == len(config._config_dict)
+def test_tune_config_iterator(pconfig):
+    for i, config in enumerate(pconfig):
+        assert isinstance(config, dict)
+        assert config == pconfig[i]
+
+        for param, value in config.items():
+            if param in pconfig._base_dict:
+                assert value == pconfig._base_dict[param]
+                assert param not in pconfig._params
+            else:
+                j = pconfig._params.index(param)
+                assert value == pconfig._value_instantiations[i][j]
+                assert param not in pconfig._base_dict
 
 
-def test_tune_config_dump(config):
+def test_tune_config_len(pconfig):
+    assert len(pconfig) == 18
+
+
+def test_tune_config_get_item(pconfig):
+    for index, config in enumerate(pconfig):
+        assert pconfig[index] == config
+
+
+def test_config_name(pconfig):
+    for config in pconfig:
+        name = pconfig.name(config)
+        assignments = name.split("/")
+        assert len(assignments) == len(pconfig._params)
+        for assignment in assignments:
+            param, value = assignment.split("=")
+            assert str(config[param]) == value
+            assert param not in pconfig._base_dict
+
+
+def test_config_full_name(pconfig):
+    for config in pconfig:
+        name = pconfig.full_name(config)
+        assignments = name.split("/")
+        assert len(assignments) == len(config)
+        for assignment in assignments:
+            param, value = assignment.split("=")
+            assert str(config[param]) == value
+
+
+def test_tune_config_dump(pconfig):
     tmp = "/tmp/tuneconfig"
 
-    filepaths = config.dump(tmp, subfolders=True)
-    assert len(filepaths) == len(config)
+    filepaths = pconfig.dump(tmp, fullname=True)
+    assert len(filepaths) == len(pconfig)
 
-    for index, params_config in enumerate(config):
-        dirpath = os.path.join(tmp, str(index))
-        filepath = os.path.join(dirpath, "config.json")
-        assert filepaths[index] == filepath
-        assert os.path.exists(dirpath)
+    for idx, config in enumerate(pconfig):
+
+        filepath = os.path.join(tmp, pconfig.full_name(config), "config.json")
+        assert filepaths[idx] == filepath
         assert os.path.exists(filepath)
         assert os.path.isfile(filepath)
 
         with open(filepath, "r") as file:
-            assert params_config == json.load(file)
+            assert config == json.load(file)
 
-    filepaths = config.dump(tmp, subfolders=False)
-    assert len(filepaths) == len(config)
+    filepaths = pconfig.dump(tmp, fullname=False)
+    assert len(filepaths) == len(pconfig)
 
-    for index, params_config in enumerate(config):
-        dirpath = tmp
-        filepath = os.path.join(dirpath, f"config{index}.json")
-        assert filepaths[index] == filepath
-        assert os.path.exists(dirpath)
+    for idx, config in enumerate(pconfig):
+
+        filepath = os.path.join(tmp, pconfig.name(config), "config.json")
+        assert filepaths[idx] == filepath
         assert os.path.exists(filepath)
         assert os.path.isfile(filepath)
 
         with open(filepath, "r") as file:
-            assert params_config == json.load(file)
-
-
-def test_tune_config_len(config):
-    assert len(config) == 18
-
-
-def test_tune_config_get_item(config):
-    for index, params_config in enumerate(config):
-        assert index == config[index]["index"]
-        key_values = config[index]["name"].split("/")
-        assert len(key_values) == len(config._params)
-        for j, key_value in enumerate(key_values):
-            key, value = key_value.split("=")
-            assert value == str(config._value_instantiations[index][j])
-        assert config[index]["value"] == params_config
+            assert config == json.load(file)

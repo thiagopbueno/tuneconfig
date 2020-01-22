@@ -28,14 +28,14 @@ config_template = tuneconfig.TuneConfig({
 
 # Iterate over config dicts
 for idx, config in enumerate(config_template):
-    name = config_template[idx]["name"]
+    name = config_template.name(config)
     print(f"config {idx} ({name}):")
     pprint.pprint(config)
     print()
 
 # Dump config dicts as JSON files
 tmp = "/tmp/tuneconfig"
-config_template.dump(dirpath=tmp, subfolders=True)
+config_template.dump(dirpath=tmp)
 ```
 
 ```bash
