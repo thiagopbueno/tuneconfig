@@ -18,17 +18,14 @@ class ParamsIterator:
 
 class TuneConfig:
 
-    def __init__(self, config_dict, format_func=None):
+    def __init__(self, config_dict, format_fn=None):
         self._config_dict = config_dict
-        self._format_func = format_func
+        self._format_fn = format_fn
 
         self._base_dict = {}
         self._params_iterators = {}
 
         for param, value in self._config_dict.items():
-            if self._format_func is not None:
-                param = self._format_func(param)
-
             if isinstance(value, ParamsIterator):
                 self._params_iterators[param] = list(value)
             else:
@@ -61,30 +58,30 @@ class TuneConfig:
 
         return self[i]
 
-    def name(self, config):
+    def _experiment_id(self, config):
         assignments = []
+
         for param in sorted(config):
-            if param not in self._params:
+            fmt_param = param
+            if self._format_fn:
+                fmt_param = self._format_fn(param)
+
+            if fmt_param is None:
                 continue
+
             value = config[param]
-            assignments.append(f"{param}={value}")
+            assignments.append(f"{fmt_param}={value}")
+
         return '/'.join(assignments)
 
-    def full_name(self, config):
-        assignments = []
-        for param in sorted(config):
-            value = config[param]
-            assignments.append(f"{param}={value}")
-        return '/'.join(assignments)
-
-    def dump(self, basepath, fullname=True):
+    def dump(self, basepath, ignore=None):
         json_files_created = []
 
         for config in self:
+            if not self._is_config_valid(config, ignore):
+                continue
 
-            experiment_id = self.full_name(config) if fullname else self.name(config)
-
-            dirpath = os.path.join(basepath, experiment_id)
+            dirpath = os.path.join(basepath, self._experiment_id(config))
 
             if not os.path.exists(dirpath):
                 os.makedirs(dirpath)
@@ -97,3 +94,18 @@ class TuneConfig:
                 json_files_created.append(filepath)
 
         return json_files_created
+
+    def _is_config_valid(self, config, ignore):
+        if ignore is None:
+            return True
+
+        if isinstance(ignore, dict):
+            ignore = [ignore]
+
+        valid = True
+        for no_config in ignore:
+            if all(config.get(key) == value for key, value in no_config.items()):
+                valid = False
+                break
+
+        return valid

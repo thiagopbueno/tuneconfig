@@ -8,12 +8,13 @@ import tuneconfig
 
 @pytest.fixture(scope="module")
 def pconfig():
-    def format_func(param):
+    def format_fn(param):
         fmt = {
             "batch_size": "batch",
             "horizon": "hr",
             "learning_rate": "lr",
-            "optimizer": "opt"
+            "optimizer": "opt",
+            "num_samples": None
         }
         return fmt.get(param, param)
 
@@ -22,9 +23,10 @@ def pconfig():
         "horizon": 40,
         "learning_rate": tuneconfig.grid_search([0.01, 0.1]),
         "epochs": 1000,
-        "optimizer": tuneconfig.grid_search(["Adam", "RMSProp", "GradientDescent"])
+        "optimizer": tuneconfig.grid_search(["Adam", "RMSProp", "GradientDescent"]),
+        "num_samples": 10
         },
-        format_func=format_func
+        format_fn=format_fn,
     )
 
 
@@ -58,36 +60,32 @@ def test_tune_config_get_item(pconfig):
         assert pconfig[index] == config
 
 
-def test_config_name(pconfig):
+def test_experiment_id(pconfig):
     for config in pconfig:
-        name = pconfig.name(config)
+        name = pconfig._experiment_id(config)
         assignments = name.split("/")
-        assert len(assignments) == len(pconfig._params)
+
+        ignore_params = [p for p in config if pconfig._format_fn(p) is None]
+        assert len(assignments) == len(config) - len(ignore_params)
+
         for assignment in assignments:
             param, value = assignment.split("=")
-            assert str(config[param]) == value
-            assert param not in pconfig._base_dict
 
-
-def test_config_full_name(pconfig):
-    for config in pconfig:
-        name = pconfig.full_name(config)
-        assignments = name.split("/")
-        assert len(assignments) == len(config)
-        for assignment in assignments:
-            param, value = assignment.split("=")
-            assert str(config[param]) == value
+            for p, val in config.items():
+                fmt_param = pconfig._format_fn(p)
+                if fmt_param == param:
+                    assert value == str(val)
 
 
 def test_tune_config_dump(pconfig):
     tmp = "/tmp/tuneconfig"
 
-    filepaths = pconfig.dump(tmp, fullname=True)
+    filepaths = pconfig.dump(tmp)
     assert len(filepaths) == len(pconfig)
 
     for idx, config in enumerate(pconfig):
 
-        filepath = os.path.join(tmp, pconfig.full_name(config), "config.json")
+        filepath = os.path.join(tmp, pconfig._experiment_id(config), "config.json")
         assert filepaths[idx] == filepath
         assert os.path.exists(filepath)
         assert os.path.isfile(filepath)
@@ -95,15 +93,69 @@ def test_tune_config_dump(pconfig):
         with open(filepath, "r") as file:
             assert config == json.load(file)
 
-    filepaths = pconfig.dump(tmp, fullname=False)
-    assert len(filepaths) == len(pconfig)
 
-    for idx, config in enumerate(pconfig):
+def test_is_config_valid(pconfig):
+    ignore = {
+        "batch_size": 128,
+        "learning_rate": 0.1,
+    }
 
-        filepath = os.path.join(tmp, pconfig.name(config), "config.json")
-        assert filepaths[idx] == filepath
-        assert os.path.exists(filepath)
-        assert os.path.isfile(filepath)
+    for config in pconfig:
+        for param, value in ignore.items():
+            if param not in config or config[param] != value:
+                assert pconfig._is_config_valid(config, ignore)
 
-        with open(filepath, "r") as file:
-            assert config == json.load(file)
+    ignore = [
+        {
+            "batch_size": 128,
+            "learning_rate": 0.1,
+        },
+        {
+            "batch_size": 32,
+            "optimizer": "GradientDescent",
+            "learning_rate": 0.01,
+        },
+        {
+            "horizon": 100,
+            "batch_size": 64
+        }
+    ]
+
+    for config in pconfig:
+        for no_config in ignore:
+            for param, value in no_config.items():
+                if param not in config or config[param] != value:
+                    assert pconfig._is_config_valid(config, no_config)
+
+
+def test_tune_config_filter(pconfig):
+    ignore = [
+        {
+            "batch_size": 128,
+            "learning_rate": 0.1,
+        },
+        {
+            "batch_size": 32,
+            "optimizer": "GradientDescent",
+            "learning_rate": 0.01,
+        },
+        {
+            "horizon": 100,
+            "batch_size": 64
+        }
+    ]
+
+    tmp = "/tmp/tuneconfig"
+
+    filepaths = pconfig.dump(tmp, ignore=ignore)
+
+    num_valid_configs = 0
+    for config in pconfig:
+
+        if not pconfig._is_config_valid(config, ignore):
+            filepath = os.path.join(tmp, pconfig._experiment_id(config), "config.json")
+            assert filepath not in filepaths
+        else:
+            num_valid_configs += 1
+
+    assert len(filepaths) == num_valid_configs
