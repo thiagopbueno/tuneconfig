@@ -58,7 +58,7 @@ class TuneConfig:
 
         return self[i]
 
-    def _experiment_id(self, config):
+    def _trial_id(self, config):
         assignments = []
 
         for param in sorted(config):
@@ -81,7 +81,7 @@ class TuneConfig:
             if not self._is_config_valid(config, ignore):
                 continue
 
-            dirpath = os.path.join(basepath, self._experiment_id(config))
+            dirpath = os.path.join(basepath, self._trial_id(config))
 
             if not os.path.exists(dirpath):
                 os.makedirs(dirpath)

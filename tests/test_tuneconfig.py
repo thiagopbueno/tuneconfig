@@ -60,9 +60,9 @@ def test_tune_config_get_item(pconfig):
         assert pconfig[index] == config
 
 
-def test_experiment_id(pconfig):
+def test_trial_id(pconfig):
     for config in pconfig:
-        name = pconfig._experiment_id(config)
+        name = pconfig._trial_id(config)
         assignments = name.split("/")
 
         ignore_params = [p for p in config if pconfig._format_fn(p) is None]
@@ -85,7 +85,7 @@ def test_tune_config_dump(pconfig):
 
     for idx, config in enumerate(pconfig):
 
-        filepath = os.path.join(tmp, pconfig._experiment_id(config), "config.json")
+        filepath = os.path.join(tmp, pconfig._trial_id(config), "config.json")
         assert filepaths[idx] == filepath
         assert os.path.exists(filepath)
         assert os.path.isfile(filepath)
@@ -153,7 +153,7 @@ def test_tune_config_filter(pconfig):
     for config in pconfig:
 
         if not pconfig._is_config_valid(config, ignore):
-            filepath = os.path.join(tmp, pconfig._experiment_id(config), "config.json")
+            filepath = os.path.join(tmp, pconfig._trial_id(config), "config.json")
             assert filepath not in filepaths
         else:
             num_valid_configs += 1
