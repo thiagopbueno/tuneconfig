@@ -14,6 +14,7 @@ docs:
 test:
 	pytest tests/*.py -sv --disable-warnings 2>/dev/null
 
-upload:
-	python3 setup.py clean sdist
+publish:
+	python3 setup.py sdist bdist_wheel
 	twine upload dist/*
+	rm -Rfv dist/
