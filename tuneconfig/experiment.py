@@ -2,6 +2,7 @@ import itertools
 import multiprocessing as mp
 import os
 import re
+from tqdm import tqdm
 
 
 class Experiment:
@@ -42,7 +43,11 @@ class Experiment:
                     "logdir": os.path.join(trial_dir, f"run{i}")
                 })
 
-            pool = mp.Pool(processes=num_workers)
+            pool = mp.Pool(
+                processes=num_workers,
+                initializer=tqdm.set_lock,
+                initargs=(tqdm.get_lock(),)
+            )
             results[trial_id] = pool.map(exec_func, trial_configs)
             pool.close()
             pool.join()
