@@ -37,10 +37,11 @@ class Experiment:
             range_num_samples = self._run_ids(trial_dir, num_samples)
 
             trial_configs = []
-            for i in range_num_samples:
+            for i, j in enumerate(range_num_samples):
                 trial_configs.append({
                     **config,
-                    "logdir": os.path.join(trial_dir, f"run{i}")
+                    "run_id": i,
+                    "logdir": os.path.join(trial_dir, f"run{j}"),
                 })
 
             pool = mp.Pool(
