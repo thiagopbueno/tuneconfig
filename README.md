@@ -1,6 +1,6 @@
 # tuneconfig [![Py Versions][py-versions.svg]][pypi-project] [![PyPI version][pypi-version.svg]][pypi-version] [![Build Status][travis.svg]][travis-project] [![Documentation Status][rtd-badge.svg]][rtd-badge] [![License: GPL v3][license.svg]][license]
 
-Hyperparameter config file generator.
+Hyperparameter config file generator and experiment runner.
 
 
 ## Quickstart
@@ -11,6 +11,9 @@ $ pip install -U tuneconfig
 
 
 ## Usage
+
+
+### Config file generator
 
 ```python
 import pprint
