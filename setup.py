@@ -10,7 +10,7 @@ def read(filename):
 
 setup(
     name='tuneconfig',
-    version='v0.4.7',
+    version='v0.4.8',
     author='Thiago P. Bueno',
     author_email='thiago.pbueno@gmail.com',
     description='Hyperparameter config file generator.',
@@ -22,7 +22,9 @@ setup(
     packages=find_packages(),
     scripts=[],
     install_requires=[
-        "tqdm"
+        "numpy",
+        "pandas"
+        "tqdm",
     ],
     include_package_data=True,
     zip_safe=False,
