@@ -26,7 +26,7 @@ class Experiment:
         Executes the trial runner function a given number of times.
 
         Args:
-            exec_func (Callable[Dict] -> Result): The trial runner function (e.g., exec_func(config, logdir)).
+            exec_func (Callable[Dict] -> Result): The trial runner function.
             num_samples (int): The number of runs per trial.
             num_workers (int): The number of worker processes.
         """
@@ -56,25 +56,6 @@ class Experiment:
 
         return results
 
-    def report_mean_std(self, metric, extension="csv"):
-        results = {}
-
-        for config in self.config_iterator:
-            trial_id, trial_dir = self._get_trial(config)
-
-            data = []
-            for run in self._get_run_dirs(trial_dir):
-                filepath = os.path.join(trial_dir, run, f"{metric}.{extension}")
-                if os.path.isfile(filepath):
-                    data.append(pd.read_csv(filepath))
-
-            if data:
-                data = pd.concat(data)
-                data = data.groupby(data.index, sort=False)
-                results[trial_id] = (data.mean(), data.std())
-
-        return results
-
     def _get_trial(self, config):
         trial_id = self.config_iterator._trial_id(config)
         trial_dir = os.path.join(self.logdir, trial_id)
@@ -92,3 +73,7 @@ class Experiment:
         previous_run_dirs = cls._get_run_dirs(trial_dir)
         start_id = len(previous_run_dirs)
         return range(start_id, start_id + num_samples)
+
+    @classmethod
+    def is_run_dir(cls, basename):
+        return re.search(r"run\d+$", basename)
