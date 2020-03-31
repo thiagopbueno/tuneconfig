@@ -8,47 +8,15 @@ import pandas as pd
 import tuneconfig
 from tuneconfig.experiment import Experiment
 
+import os, sys
+sys.path.insert(0, os.path.abspath("tests"))
 
-def exec_func(config):
-    logdir = config["logdir"]
-    run_id = logdir.split("/")[-1]
-    del config["logdir"]
-    os.makedirs(logdir)
-
-    df = pd.DataFrame({
-        "foo": pd.Series([random.gauss(10.0, 1.0) for _ in range(10)]),
-        "baz": pd.Series([random.gauss(20.0, 2.0) for _ in range(10)]),
-        "bar": pd.Series([random.gauss(30.0, 3.0) for _ in range(10)]),
-    })
-    filepath = os.path.join(logdir, "data.csv")
-    df.to_csv(filepath, index=False)
-
-    return (mp.current_process().pid, config, logdir, run_id)
-
-
-@pytest.fixture(scope="module")
-def config_iterator():
-    return tuneconfig.TuneConfig({
-        "batch_size": tuneconfig.grid_search([32, 64, 128]),
-        "horizon": 40,
-        "learning_rate": tuneconfig.grid_search([0.01, 0.1]),
-        "epochs": 1000,
-        "optimizer": tuneconfig.grid_search(["Adam", "RMSProp", "GradientDescent"]),
-        "num_samples": 10
-    })
-
-
-@pytest.fixture(scope="module")
-def experiment(config_iterator):
-    logdir = "/tmp/tuneconfig/test_experiment_run"
-    experiment = Experiment(config_iterator, logdir)
-    experiment.start()
-    return experiment
+import conftest
 
 
 def test_run(experiment):
-    num_samples = num_workers = 20
-    results = experiment.run(exec_func, num_samples, num_workers)
+    num_samples = num_workers = 5
+    results = experiment.run(conftest.exec_func, num_samples, num_workers)
     assert len(results) == len(experiment.config_iterator)
     for trial_id, trial_results in results.items():
         assert len(trial_results) == num_samples
