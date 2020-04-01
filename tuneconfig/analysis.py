@@ -5,6 +5,7 @@ import os
 import pandas as pd
 
 from tuneconfig.experiment import Experiment
+from tuneconfig.trial import Trial
 
 
 class ExperimentAnalysis:
@@ -30,8 +31,8 @@ class ExperimentAnalysis:
 
     @property
     def size(self):
-        n_trials = len(self._trials)
-        total_runs = sum(len(values["runs"]) for values in self._trials.values())
+        n_trials = len(self)
+        total_runs = sum(len(trial) for trial in self._trials.values())
         n_runs_per_trial = total_runs / n_trials
         return (n_trials, n_runs_per_trial)
 
@@ -45,9 +46,6 @@ class ExperimentAnalysis:
         print(f"ResultIndex: {len(self.results)} result files.")
         for result, metrics in self.metrics.items():
             print(f"  - {result}({', '.join(metrics)})")
-
-    def describe(self):
-        pass
 
     def setup(self):
         for dirname, subdirs, filenames in os.walk(self.logdir):
@@ -70,32 +68,13 @@ class ExperimentAnalysis:
                             self._results[basename].update(set(df.columns))
                             runs[run_dir][basename] = df
 
-                self._trials[dirname] = {
-                    "config": config,
-                    "runs": runs
-                }
-
-    def report_stats(self, metric):
-        results = {}
-
-        for trial_id, trial in self._trials.items():
-            runs = trial["runs"]
-
-            data = [
-                metrics[metric] for metrics in runs.values()
-                if metric in metrics
-            ]
-
-            if data:
-                data = pd.concat(data)
-                results[trial_id] = data.groupby(data.index, sort=False).agg([
-                    'mean', 'std', 'min', 'max'
-                ])
-
-        return results
+                self._trials[dirname] = Trial(dirname, config, runs)
 
     def __str__(self):
         return f"ExperimentAnalysis(logdir='{self.logdir}')"
 
     def __len__(self):
         return len(self._trials)
+
+    def __getitem__(self, i):
+        return list(self._trials.items())[i][1]
