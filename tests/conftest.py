@@ -8,6 +8,7 @@ import pytest
 
 import tuneconfig
 import tuneconfig.experiment
+import tuneconfig.analysis
 
 
 def exec_func(config):
@@ -64,3 +65,17 @@ def experiment(config_factory):
     experiment.start()
     yield experiment
     shutil.rmtree(logdir)
+
+
+@pytest.fixture(scope="session")
+def analysis(experiment):
+    num_samples = num_workers = 10
+    _ = experiment.run(exec_func, num_samples, num_workers)
+    analysis = tuneconfig.analysis.ExperimentAnalysis(experiment.logdir)
+    analysis.setup()
+    return analysis
+
+
+@pytest.fixture(scope="session")
+def trial(analysis):
+    return analysis[0]
