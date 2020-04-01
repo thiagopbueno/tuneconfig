@@ -2,7 +2,6 @@ from collections import defaultdict
 import json
 import os
 
-
 import pandas as pd
 
 from tuneconfig.experiment import Experiment
@@ -15,18 +14,37 @@ class ExperimentAnalysis:
 
         self._trials = {}
         self._params = defaultdict(lambda: set())
-        self._metrics = defaultdict(lambda: set())
+        self._results = defaultdict(lambda: set())
 
     @property
     def params(self):
         return {key: sorted(values) for key, values in self._params.items()}
 
     @property
+    def results(self):
+        return sorted(self._results.keys())
+
+    @property
     def metrics(self):
-        return {key: sorted(values) for key, values in self._metrics.items()}
+        return {key: sorted(values) for key, values in self._results.items()}
+
+    @property
+    def size(self):
+        n_trials = len(self._trials)
+        total_runs = sum(len(values["runs"]) for values in self._trials.values())
+        n_runs_per_trial = total_runs / n_trials
+        return (n_trials, n_runs_per_trial)
 
     def info(self):
-        pass
+        n_trials, runs_per_trial = self.size
+        print(f"<{self}>")
+        print(f"TrialIndex: {n_trials} trials, {runs_per_trial} runs per trial.")
+        print(f"ParamIndex: {len(self.params)} parameters.")
+        for param, values in self.params.items():
+            print(f"  - {param} = [{', '.join(list(map(str, values)))}]")
+        print(f"ResultIndex: {len(self.results)} result files.")
+        for result, metrics in self.metrics.items():
+            print(f"  - {result}({', '.join(metrics)})")
 
     def describe(self):
         pass
@@ -49,7 +67,7 @@ class ExperimentAnalysis:
                         if extension == ".csv":
                             filepath = os.path.join(dirname, run_dir, path)
                             df = pd.read_csv(filepath)
-                            self._metrics[basename].update(set(df.columns))
+                            self._results[basename].update(set(df.columns))
                             runs[run_dir][basename] = df
 
                 self._trials[dirname] = {
@@ -75,3 +93,9 @@ class ExperimentAnalysis:
                 ])
 
         return results
+
+    def __str__(self):
+        return f"ExperimentAnalysis(logdir='{self.logdir}')"
+
+    def __len__(self):
+        return len(self._trials)

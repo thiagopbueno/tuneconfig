@@ -25,11 +25,15 @@ def test_setup(analysis):
 
 
 def test_params(analysis):
-    print(analysis.params)
+    pass
 
 
 def test_metrics(analysis):
-    print(analysis.metrics)
+    pass
+
+
+def test_info(analysis):
+    analysis.info()
 
 
 def test_report_stats(analysis):
