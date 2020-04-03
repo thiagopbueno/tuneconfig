@@ -12,6 +12,9 @@ class Experiment:
     Experiment -> trials -> runs.
     """
 
+    CONFIG_FILE = "config.json"
+    RUN_DIR_REGEX = r"run\d+$"
+
     def __init__(self, config_iterator, logdir, name=None, description=None):
         self.config_iterator = config_iterator
         self.logdir = logdir
@@ -62,18 +65,22 @@ class Experiment:
         return trial_id, trial_dir
 
     @classmethod
-    def _get_run_dirs(cls, trial_dir):
+    def get_run_dirs(cls, trial_dir):
         return [
-            path for path in os.listdir(trial_dir)
-            if re.search(r"run\d+$", path)
+            f.path for f in os.scandir(trial_dir)
+            if re.search(cls.RUN_DIR_REGEX, f.path)
         ]
 
     @classmethod
     def _get_run_ids(cls, trial_dir, num_samples):
-        previous_run_dirs = cls._get_run_dirs(trial_dir)
+        previous_run_dirs = cls.get_run_dirs(trial_dir)
         start_id = len(previous_run_dirs)
         return range(start_id, start_id + num_samples)
 
     @classmethod
     def is_run_dir(cls, basename):
-        return re.search(r"run\d+$", basename)
+        return re.search(cls.RUN_DIR_REGEX, basename)
+
+    @classmethod
+    def is_trial_dir(cls, dirname):
+        return cls.CONFIG_FILE in os.listdir(dirname)
