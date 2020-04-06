@@ -24,7 +24,7 @@ class Experiment:
     def start(self):
         config_files = self.config_iterator.dump(self.logdir)
 
-    def run(self, exec_func, num_samples, num_workers=None):
+    def run(self, exec_func, num_samples, num_workers=None, verbose=False):
         """
         Executes the trial runner function a given number of times.
 
@@ -35,7 +35,12 @@ class Experiment:
         """
         results = {}
 
-        for config in self.config_iterator:
+        total_num_trials = len(self.config_iterator)
+
+        for i, config in enumerate(self.config_iterator):
+            if verbose:
+                print(f">> Trial #{i}/{total_num_trials} : {config}")
+
             trial_id, trial_dir = self._get_trial(config)
 
             range_num_samples = self._get_run_ids(trial_dir, num_samples)
