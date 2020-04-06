@@ -68,7 +68,7 @@ class Trial:
             for path in os.listdir(run_dir):
                 basename, extension = os.path.splitext(path)
                 if extension == ".csv":
-                    filepath = os.path.join(dirname, run_dir, path)
+                    filepath = os.path.join(run_dir, path)
                     df = pd.read_csv(filepath)
                     runs[run_dir][basename] = df
 

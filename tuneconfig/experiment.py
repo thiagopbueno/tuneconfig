@@ -39,10 +39,9 @@ class Experiment:
 
         for i, config in enumerate(self.config_iterator):
             if verbose:
-                print(f">> Trial #{i}/{total_num_trials} : {config}")
+                print(f">> Trial #{i+1}/{total_num_trials} : {config}")
 
             trial_id, trial_dir = self._get_trial(config)
-
             range_num_samples = self._get_run_ids(trial_dir, num_samples)
 
             trial_configs = []
