@@ -58,6 +58,13 @@ class ExperimentAnalysis:
                 for key, value in trial.config.items():
                     self._params[key].add(value)
 
+    def get(self, params_values):
+        trials = {}
+        for name, trial in self._trials.items():
+            if all(pv in name for pv in params_values):
+                trials[name] = trial
+        return trials
+
     def __str__(self):
         return f"ExperimentAnalysis(logdir='{self.logdir}')"
 
