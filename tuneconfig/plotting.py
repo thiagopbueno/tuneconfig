@@ -1,6 +1,9 @@
 from collections import defaultdict
 
 import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set(style="dark")
 
 
 class ExperimentPlotter:
