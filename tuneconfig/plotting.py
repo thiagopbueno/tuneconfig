@@ -56,7 +56,7 @@ class ExperimentPlotter:
         # create figure and subplots
         figsize = kwargs.get("figsize", (7, 5))
         fig, axes = plt.subplots(
-            nrows, ncols, sharex=True, sharey=True, figsize=figsize
+            nrows, ncols, sharex=True, sharey=False, figsize=figsize
         )
 
         # iterate over axes and plot each metric
@@ -67,17 +67,19 @@ class ExperimentPlotter:
 
                 if x_axis and not y_axis:
                     for k, metric in enumerate(metrics):
+                        kwargs["axis_"] = (k, j, len(metrics), len(trial_grid))
                         self._plot(axes[k][j], x, y, x_axis, y_axis, metric, **kwargs)
                 elif not x_axis and y_axis:
                     for k, metric in enumerate(metrics):
+                        kwargs["axis_"] = (i, k, len(trial_grid[x]), len(metrics))
                         self._plot(axes[i][k], x, y, x_axis, y_axis, metric, **kwargs)
                 elif not x_axis and not y_axis:
                     for k, metric in enumerate(metrics):
+                        kwargs["axis_"] = (0, k, 1, len(metrics))
                         self._plot(axes[k], x, y, x_axis, y_axis, metric, **kwargs)
                 else:
-                    print(i, j)
-                    print(axes[i][j])
-                    self._plot(axes[k], x, y, x_axis, y_axis, metric, **kwargs)
+                    kwargs["axis_"] = (i, j, len(trial_grid[x]), len(trial_grid))
+                    self._plot(axes[i][j], x, y, x_axis, y_axis, metric, **kwargs)
 
         # save figure
         if filename:
@@ -92,15 +94,20 @@ class ExperimentPlotter:
         mean, std = df["mean"], df["std"]
         lower = mean - std
         upper = mean + std
-        x = range(len(mean))
-        ax.plot(x, mean, label=label)
-        ax.fill_between(x, lower, upper, alpha=0.3)
+        xs = range(len(mean))
+        ax.plot(xs, mean, label=label)
+        ax.fill_between(xs, lower, upper, alpha=0.3)
 
         title = f"{x_axis}={x}" if x_axis else ""
-        title += ", " if x_axis else ""
+        title += ", " if x_axis and y_axis else ""
         title += f"{y_axis}={y}" if y_axis else ""
         ax.set_title(title)
-        ax.set_xlabel(kwargs.get("target_x_axis_label"))
+
+        i, j, max_i, _ = kwargs["axis_"]
+        if i == max_i-1:
+            ax.set_xlabel(kwargs.get("target_x_axis_label"))
+        if j == 0:
+            ax.set_ylabel(kwargs.get("target_y_axis_label"))
 
         ax.grid()
         ax.legend()
