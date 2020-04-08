@@ -123,7 +123,7 @@ class ExperimentPlotter:
         title = f"{x_axis}={x}" if x_axis else ""
         title += ", " if x_axis and y_axis else ""
         title += f"{y_axis}={y}" if y_axis else ""
-        ax.set_title(title)
+        ax.set_title(title, fontweight="bold")
 
         i, j, max_i, _ = kwargs["axis_"]
         if i == max_i-1:
