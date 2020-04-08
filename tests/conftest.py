@@ -6,9 +6,7 @@ import multiprocessing as mp
 import pandas as pd
 import pytest
 
-import tuneconfig
-import tuneconfig.experiment
-import tuneconfig.analysis
+from tuneconfig import *
 
 
 def exec_func(config):
@@ -46,12 +44,12 @@ def config_factory():
         }
         return fmt.get(param, param)
 
-    return tuneconfig.TuneConfig({
-        "batch_size": tuneconfig.grid_search([32, 64, 128]),
+    return ConfigFactory({
+        "batch_size": grid_search([32, 64, 128]),
         "horizon": 40,
-        "learning_rate": tuneconfig.grid_search([0.01, 0.1]),
+        "learning_rate": grid_search([0.01, 0.1]),
         "epochs": 1000,
-        "optimizer": tuneconfig.grid_search(["Adam", "RMSProp", "GradientDescent"]),
+        "optimizer": grid_search(["Adam", "RMSProp", "GradientDescent"]),
         "num_samples": 10
         },
         format_fn=format_fn,
@@ -61,7 +59,7 @@ def config_factory():
 @pytest.fixture(scope="session")
 def experiment(config_factory):
     logdir = "/tmp/tuneconfig_1"
-    experiment = tuneconfig.experiment.Experiment(config_factory, logdir)
+    experiment = Experiment(config_factory, logdir)
     experiment.start()
     yield experiment
     shutil.rmtree(logdir)
@@ -71,7 +69,7 @@ def experiment(config_factory):
 def analysis(experiment):
     num_samples = num_workers = 10
     _ = experiment.run(exec_func, num_samples, num_workers)
-    analysis = tuneconfig.analysis.ExperimentAnalysis(experiment.logdir)
+    analysis = ExperimentAnalysis(experiment.logdir)
     analysis.setup()
     return analysis
 
@@ -85,17 +83,15 @@ def trial(analysis):
 def analysis_list(config_factory):
     basedir = "/tmp/tuneconfig_2"
     num_samples = num_workers = 3
+
     analyses = []
     for i in range(3):
         name = f"experiment{i}"
         logdir = os.path.join(basedir, name)
-        experiment = tuneconfig.experiment.Experiment(config_factory, logdir)
+        experiment = Experiment(config_factory, logdir)
         experiment.start()
         _ = experiment.run(exec_func, num_samples, num_workers)
-        exp_analysis = tuneconfig.analysis.ExperimentAnalysis(
-            experiment.logdir,
-            name
-        )
+        exp_analysis = ExperimentAnalysis(experiment.logdir, name)
         exp_analysis.setup()
         analyses.append(exp_analysis)
 
