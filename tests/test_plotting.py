@@ -3,12 +3,7 @@ import pytest
 from tuneconfig.plotting import ExperimentPlotter
 
 
-@pytest.fixture(scope="module")
-def plotter(analysis):
-    return ExperimentPlotter(analysis)
-
-
-def test_plot(plotter):
+def test_plot(analysis):
     targets = ["data:foo", "data:baz"]
     anchors = ["batch=32", "lr=0.01"]
     x_axis, y_axis = None, "optimizer"
@@ -17,4 +12,22 @@ def test_plot(plotter):
         "target_y_axis_label": "Loss"
     }
 
-    plotter.plot(targets, anchors, x_axis, y_axis, **kwargs)
+    plotter = ExperimentPlotter(analysis)
+    plotter.plot(targets, anchors, x_axis, y_axis, show_fig=False, **kwargs)
+
+
+def test_plot_multiple_analysis(analysis_list):
+    for analysis in analysis_list:
+        print()
+        analysis.info()
+
+    targets = ["data:bar", "metric:test"]
+    anchors = ["batch=128", "lr=0.1"]
+    x_axis, y_axis = "optimizer", None
+    kwargs = {
+        "target_x_axis_label": "Epochs",
+        "target_y_axis_label": "Loss"
+    }
+
+    plotter = ExperimentPlotter(analysis_list)
+    plotter.plot(targets, anchors, x_axis, y_axis, show_fig=False, **kwargs)

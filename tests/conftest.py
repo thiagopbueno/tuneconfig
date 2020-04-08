@@ -26,7 +26,7 @@ def exec_func(config):
     df.to_csv(filepath, index=False)
 
     df = pd.DataFrame({
-        "test": pd.Series([random.randrange(-10.0, 10.0) for _ in range(20)]),
+        "test": pd.Series([random.randrange(-10.0, 10.0) for _ in range(10)]),
     })
     filepath = os.path.join(logdir, "metric.csv")
     df.to_csv(filepath, index=False)
@@ -60,7 +60,7 @@ def config_factory():
 
 @pytest.fixture(scope="session")
 def experiment(config_factory):
-    logdir = "/tmp/tuneconfig"
+    logdir = "/tmp/tuneconfig_1"
     experiment = tuneconfig.experiment.Experiment(config_factory, logdir)
     experiment.start()
     yield experiment
@@ -79,3 +79,27 @@ def analysis(experiment):
 @pytest.fixture(scope="session")
 def trial(analysis):
     return analysis[0]
+
+
+@pytest.fixture(scope="session")
+def analysis_list(config_factory):
+    basedir = "/tmp/tuneconfig_2"
+    num_samples = num_workers = 3
+    analyses = []
+    for i in range(3):
+        name = f"experiment{i}"
+        logdir = os.path.join(basedir, name)
+        experiment = tuneconfig.experiment.Experiment(config_factory, logdir)
+        experiment.start()
+        _ = experiment.run(exec_func, num_samples, num_workers)
+        exp_analysis = tuneconfig.analysis.ExperimentAnalysis(
+            experiment.logdir,
+            name
+        )
+        exp_analysis.setup()
+        analyses.append(exp_analysis)
+
+    yield analyses
+
+    for analysis in analyses:
+        shutil.rmtree(analysis.logdir)
