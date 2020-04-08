@@ -13,8 +13,9 @@ class ExperimentAnalysis:
 
     """
 
-    def __init__(self, logdir):
+    def __init__(self, logdir, name=None):
         self.logdir = logdir
+        self.name = name
 
         self._trials = {}
         self._params = defaultdict(set)
@@ -66,7 +67,7 @@ class ExperimentAnalysis:
         return trials
 
     def __str__(self):
-        return f"ExperimentAnalysis(logdir='{self.logdir}')"
+        return f"ExperimentAnalysis(logdir='{self.logdir}', name='{self.name}')"
 
     def __len__(self):
         return len(self._trials)
