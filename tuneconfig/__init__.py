@@ -35,6 +35,15 @@ class TuneConfig:
         self._values = list(self._params_iterators.values())
         self._value_instantiations = list(itertools.product(*self._values))
 
+    def get(self, param):
+        if param not in self._config_dict:
+            return None
+        values = self._config_dict[param]
+        if isinstance(values, ParamsIterator):
+            return list(values)
+        else:
+            return values
+
     def __len__(self):
         return len(self._value_instantiations)
 
