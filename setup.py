@@ -25,7 +25,6 @@ setup(
         "matplotlib",
         "numpy",
         "pandas",
-        "seaborn",
         "tqdm",
     ],
     include_package_data=True,
