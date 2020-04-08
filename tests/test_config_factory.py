@@ -3,12 +3,12 @@ import os
 
 import pytest
 
-import tuneconfig
+from tuneconfig.config_factory import ParamsIterator, grid_search
 
 
 def test_grid_search():
-    values = tuneconfig.grid_search([0.001, 0.01, 0.1])
-    assert isinstance(values, tuneconfig.ParamsIterator)
+    values = grid_search([0.001, 0.01, 0.1])
+    assert isinstance(values, ParamsIterator)
     assert list(values) == values._lst
 
 
