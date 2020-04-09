@@ -20,9 +20,7 @@ class Trial:
 
     @property
     def metrics(self):
-        return {
-            result: sorted(df.columns) for result, df in self[0].items()
-        }
+        return {result: sorted(df.columns) for result, df in self[0].items()}
 
     def info(self):
         print(f"<{self}>")
@@ -41,20 +39,31 @@ class Trial:
             print(df)
             print()
 
-    def stats(self):
+    def stats(self, result=None, transform=None):
         stats_ = defaultdict(list)
 
         for run, results in self.runs.items():
-            for result, df in results.items():
-                stats_[result].append(df)
+            for filename, df in results.items():
+                if result and filename != result:
+                    continue
+                df = self._transform_metric(df, transform)
+                stats_[filename].append(df)
 
-        for result, data in stats_.items():
+        for filename, data in stats_.items():
             data = pd.concat(data)
-            stats_[result] = data.groupby(data.index, sort=False).agg([
-                "min", "max", "mean", "std"
-            ])
+            stats_[filename] = data.groupby(data.index, sort=False).agg(
+                ["min", "max", "mean", "std"]
+            )
 
         return stats_
+
+    @staticmethod
+    def _transform_metric(df, transform):
+        if not transform:
+            return df
+        if not hasattr(df, transform):
+            return ValueError(f"Invalid transform function '{transform}'.")
+        return getattr(df, transform)()
 
     @classmethod
     def from_directory(cls, dirname):

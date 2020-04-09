@@ -48,13 +48,23 @@ class ExperimentPlotter:
         xs, ys = set(), set()
         for name, trial in trials.items():
             # get avg-std stats for each required metric
-            trial_stats = trial.stats()
 
             # find required result and metrics
             metrics = []
             for target in targets:
+                transform = None
+                if "/" in target:
+                    transform, target = target.split("/")
                 result, metric = target.split(":")
-                metrics.append((target, trial_stats[result][metric]))
+                trial_stats = trial.stats(result, transform)
+                if transform:
+                    target = f"{transform}({target})"
+
+                trial_stats_result = trial_stats[result]
+                if metric in trial_stats_result.columns:
+                    metrics.append((target, trial_stats_result[metric]))
+                else:
+                    metrics.append((target, trial_stats_result.loc[metric]))
 
             x = trial.config.get(x_axis)
             y = trial.config.get(y_axis)
