@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import matplotlib.pyplot as plt
+
 plt.style.use("seaborn-darkgrid")
 
 
@@ -19,7 +20,9 @@ class ExperimentPlotter:
         **kwargs,
     ):
         if isinstance(self.analysis, list):
-            for exp_analysis in self.analysis:
+            kwargs["analysis_total_num_"] = len(self.analysis)
+            for i, exp_analysis in enumerate(self.analysis):
+                kwargs["analysis_num_"] = i
                 self._plot(exp_analysis, targets, anchors, x_axis, y_axis, **kwargs)
         else:
             self._plot(self.analysis, targets, anchors, x_axis, y_axis, **kwargs)
@@ -32,13 +35,7 @@ class ExperimentPlotter:
             plt.show()
 
     def _plot(
-        self,
-        analysis,
-        targets,
-        anchors=None,
-        x_axis=None,
-        y_axis=None,
-        **kwargs,
+        self, analysis, targets, anchors=None, x_axis=None, y_axis=None, **kwargs,
     ):
         # filter trials by anchors
         trials = analysis.get(anchors)
@@ -93,6 +90,9 @@ class ExperimentPlotter:
             )
             self._fig, self._axes = fig, axes
 
+        plot_type = kwargs["plot_type"]
+        plot_fn = getattr(self, f"_plot_{plot_type}")
+
         # iterate over axes and plot each metric
         kwargs["analysis_name_"] = analysis.name
 
@@ -104,18 +104,18 @@ class ExperimentPlotter:
                 if x_axis and not y_axis:
                     for k, metric in enumerate(metrics):
                         kwargs["axis_"] = (k, j, len(metrics), len(trial_grid))
-                        self._plot_line(axes[k][j], x, y, x_axis, y_axis, metric, **kwargs)
+                        plot_fn(axes[k][j], x, y, x_axis, y_axis, metric, **kwargs)
                 elif not x_axis and y_axis:
                     for k, metric in enumerate(metrics):
                         kwargs["axis_"] = (i, k, len(trial_grid[x]), len(metrics))
-                        self._plot_line(axes[i][k], x, y, x_axis, y_axis, metric, **kwargs)
+                        plot_fn(axes[i][k], x, y, x_axis, y_axis, metric, **kwargs)
                 elif not x_axis and not y_axis:
                     for k, metric in enumerate(metrics):
                         kwargs["axis_"] = (0, k, 1, len(metrics))
-                        self._plot_line(axes[k], x, y, x_axis, y_axis, metric, **kwargs)
+                        plot_fn(axes[k], x, y, x_axis, y_axis, metric, **kwargs)
                 else:
                     kwargs["axis_"] = (i, j, len(trial_grid[x]), len(trial_grid))
-                    self._plot_line(axes[i][j], x, y, x_axis, y_axis, metric, **kwargs)
+                    plot_fn(axes[i][j], x, y, x_axis, y_axis, metric, **kwargs)
 
     def _plot_line(self, ax, x, y, x_axis, y_axis, metric, **kwargs):
         label, df = metric
@@ -136,7 +136,39 @@ class ExperimentPlotter:
         ax.set_title(title, fontweight="bold")
 
         i, j, max_i, _ = kwargs["axis_"]
-        if i == max_i-1:
+        if i == max_i - 1:
+            ax.set_xlabel(kwargs.get("target_x_axis_label"))
+        if j == 0:
+            ax.set_ylabel(kwargs.get("target_y_axis_label"))
+
+        ax.grid()
+        ax.legend()
+
+    def _plot_bar(self, ax, x, y, x_axis, y_axis, metric, **kwargs):
+        label, df = metric
+        mean, std = df["mean"], df["std"]
+
+        if kwargs["analysis_name_"]:
+            label = f"{label} ({kwargs['analysis_name_']})"
+
+        width = 2.0
+        i = kwargs.get("analysis_num_", 0)
+        n = kwargs.get("analysis_total_num_", 1)
+        xs = [i / n * width]
+
+        ax.bar(xs, [mean], width=0.8 * width / n, label=label)
+        ax.set_xticks(xs)
+        ax.set_xticklabels([])
+        if n == 1:
+            ax.set_xlim(-width, width)
+
+        title = f"{x_axis}={x}" if x_axis else ""
+        title += ", " if x_axis and y_axis else ""
+        title += f"{y_axis}={y}" if y_axis else ""
+        ax.set_title(title, fontweight="bold")
+
+        i, j, max_i, _ = kwargs["axis_"]
+        if i == max_i - 1:
             ax.set_xlabel(kwargs.get("target_x_axis_label"))
         if j == 0:
             ax.set_ylabel(kwargs.get("target_y_axis_label"))
