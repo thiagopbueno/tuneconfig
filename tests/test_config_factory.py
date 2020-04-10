@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from tuneconfig.config_factory import ParamsIterator, grid_search
+from tuneconfig.config_factory import ParamsIterator, grid_search, ConfigFactory
 
 
 def test_grid_search():
@@ -82,19 +82,9 @@ def test_is_config_valid(config_factory):
                 assert config_factory._is_config_valid(config, ignore)
 
     ignore = [
-        {
-            "batch_size": 128,
-            "learning_rate": 0.1,
-        },
-        {
-            "batch_size": 32,
-            "optimizer": "GradientDescent",
-            "learning_rate": 0.01,
-        },
-        {
-            "horizon": 100,
-            "batch_size": 64
-        }
+        {"batch_size": 128, "learning_rate": 0.1,},
+        {"batch_size": 32, "optimizer": "GradientDescent", "learning_rate": 0.01,},
+        {"horizon": 100, "batch_size": 64},
     ]
 
     for config in config_factory:
@@ -106,19 +96,9 @@ def test_is_config_valid(config_factory):
 
 def test_tune_config_filter(config_factory):
     ignore = [
-        {
-            "batch_size": 128,
-            "learning_rate": 0.1,
-        },
-        {
-            "batch_size": 32,
-            "optimizer": "GradientDescent",
-            "learning_rate": 0.01,
-        },
-        {
-            "horizon": 100,
-            "batch_size": 64
-        }
+        {"batch_size": 128, "learning_rate": 0.1,},
+        {"batch_size": 32, "optimizer": "GradientDescent", "learning_rate": 0.01,},
+        {"horizon": 100, "batch_size": 64},
     ]
 
     tmp = "/tmp/tuneconfig"
@@ -129,9 +109,51 @@ def test_tune_config_filter(config_factory):
     for config in config_factory:
 
         if not config_factory._is_config_valid(config, ignore):
-            filepath = os.path.join(tmp, config_factory._trial_id(config), "config.json")
+            filepath = os.path.join(
+                tmp, config_factory._trial_id(config), "config.json"
+            )
             assert filepath not in filepaths
         else:
             num_valid_configs += 1
 
     assert len(filepaths) == num_valid_configs
+
+
+def test_create_config_factory_from_dict():
+    config_dict = {
+        "batch_size": ["__grid_search__", [32, 64, 128, 1024]],
+        "horizon": 40,
+        "lr": ["__grid_search__", [0.005, 0.001, 0.01]],
+        "optimizer": ["__grid_search__", ["GradientDescent", "RMSProp"]],
+    }
+
+    config_factory = ConfigFactory.from_dict(config_dict)
+
+    assert isinstance(config_factory, ConfigFactory)
+    assert len(config_factory) == 24
+    assert config_factory.get("batch_size") == config_dict["batch_size"][-1]
+    assert config_factory.get("horizon") == config_dict["horizon"]
+    assert config_factory.get("lr") == config_dict["lr"][-1]
+    assert config_factory.get("optimizer") == config_dict["optimizer"][-1]
+
+
+def test_create_config_factory_from_json():
+    config_dict = {
+        "batch_size": ["__grid_search__", [32, 64, 128, 1024]],
+        "horizon": 40,
+        "lr": ["__grid_search__", [0.005, 0.001, 0.01]],
+        "optimizer": ["__grid_search__", ["GradientDescent", "RMSProp"]],
+    }
+
+    config_json = "/tmp/tuneconfig/experiment_config.json"
+    with open(config_json, "w") as file:
+        json.dump(config_dict, file)
+
+    config_factory = ConfigFactory.from_json(config_json)
+
+    assert isinstance(config_factory, ConfigFactory)
+    assert len(config_factory) == 24
+    assert config_factory.get("batch_size") == config_dict["batch_size"][-1]
+    assert config_factory.get("horizon") == config_dict["horizon"]
+    assert config_factory.get("lr") == config_dict["lr"][-1]
+    assert config_factory.get("optimizer") == config_dict["optimizer"][-1]

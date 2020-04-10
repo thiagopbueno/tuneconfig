@@ -8,7 +8,6 @@ def grid_search(lst):
 
 
 class ParamsIterator:
-
     def __init__(self, lst):
         self._lst = lst
 
@@ -17,7 +16,6 @@ class ParamsIterator:
 
 
 class ConfigFactory:
-
     def __init__(self, config_dict, format_fn=None):
         self._config_dict = config_dict
         self._format_fn = format_fn
@@ -49,10 +47,7 @@ class ConfigFactory:
 
     def __getitem__(self, i):
         values = self._value_instantiations[i]
-        return {
-            **self._base_dict,
-            **dict(zip(self._params, values))
-        }
+        return {**self._base_dict, **dict(zip(self._params, values))}
 
     def __iter__(self):
         self._index = 0
@@ -81,7 +76,7 @@ class ConfigFactory:
             value = config[param]
             assignments.append(f"{fmt_param}={value}")
 
-        return '/'.join(assignments)
+        return "/".join(assignments)
 
     def dump(self, basepath, ignore=None):
         json_files_created = []
@@ -118,3 +113,29 @@ class ConfigFactory:
                 break
 
         return valid
+
+    @classmethod
+    def from_dict(cls, config_dict):
+        def _get_params_iterator(value):
+            valid_params_iterators = ["__grid_search__"]
+            if (
+                not isinstance(value, list)
+                or len(value) == 0
+                or value[0] not in valid_params_iterators
+            ):
+                return value
+
+            if value[0] == "__grid_search__":
+                assert isinstance(value[1], list)
+                return grid_search(value[1])
+            else:
+                raise ValueError(f"Not a valid ParamsIterator: '{values}'.")
+
+        return ConfigFactory(
+            {param: _get_params_iterator(value) for param, value in config_dict.items()}
+        )
+
+    @classmethod
+    def from_json(cls, filepath):
+        with open(filepath, "r") as file:
+            return cls.from_dict(json.load(file))
