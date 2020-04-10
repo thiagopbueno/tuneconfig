@@ -126,7 +126,7 @@ class ConfigFactory:
         return valid
 
     @classmethod
-    def from_dict(cls, config_dict):
+    def from_dict(cls, config_dict, format_fn=None):
         def _get_params_iterator(value):
             valid_params_iterators = ["__grid_search__"]
             if (
@@ -143,10 +143,14 @@ class ConfigFactory:
                 raise ValueError(f"Not a valid ParamsIterator: '{values}'.")
 
         return ConfigFactory(
-            {param: _get_params_iterator(value) for param, value in config_dict.items()}
+            {
+                param: _get_params_iterator(value)
+                for param, value in config_dict.items()
+            },
+            format_fn=format_fn,
         )
 
     @classmethod
-    def from_json(cls, filepath):
+    def from_json(cls, filepath, format_fn=None):
         with open(filepath, "r") as file:
-            return cls.from_dict(json.load(file))
+            return cls.from_dict(json.load(file), format_fn=format_fn)
