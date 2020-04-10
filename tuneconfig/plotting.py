@@ -1,4 +1,5 @@
 from collections import defaultdict
+import json
 
 import matplotlib.pyplot as plt
 
@@ -175,3 +176,10 @@ class ExperimentPlotter:
 
         ax.grid()
         ax.legend()
+
+    def plot_chart_from_spec(self, filepath, **kwargs):
+        with open(filepath, "r") as file:
+            config_dict = json.load(file)
+            config_dict.update(kwargs)
+
+        self.plot(**config_dict)
