@@ -45,6 +45,14 @@ class ConfigFactory:
         else:
             return values
 
+    def set(self, param, value):
+        self._config_dict[param] = value
+        self._reset()
+
+    def update(self, config_dict):
+        self._config_dict.update(config_dict)
+        self._reset()
+
     def __len__(self):
         return len(self._value_instantiations)
 
