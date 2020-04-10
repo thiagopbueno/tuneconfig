@@ -20,6 +20,9 @@ class ConfigFactory:
         self._config_dict = config_dict
         self._format_fn = format_fn
 
+        self._reset()
+
+    def _reset(self):
         self._base_dict = {}
         self._params_iterators = {}
 
