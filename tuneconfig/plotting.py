@@ -88,7 +88,11 @@ class ExperimentPlotter:
         else:
             figsize = kwargs.get("figsize", (7, 5))
             fig, axes = plt.subplots(
-                nrows, ncols, sharex=True, sharey=False, squeeze=False, figsize=figsize
+                nrows, ncols,
+                sharex=kwargs.get("sharex", False),
+                sharey=kwargs.get("sharey", False),
+                squeeze=False,
+                figsize=figsize
             )
             self._fig, self._axes = fig, axes
 

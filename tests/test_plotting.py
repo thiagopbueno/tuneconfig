@@ -1,5 +1,7 @@
 import pytest
 
+import matplotlib.pyplot as plt
+
 from tuneconfig.plotting import ExperimentPlotter
 
 
@@ -23,6 +25,8 @@ def test_plot_multiple_targets_no_axis(analysis):
         "plot_type": "line",
         "target_x_axis_label": "Epochs",
         "target_y_axis_label": "Values",
+        "sharex": True,
+        "sharey": True,
     }
 
     plotter = ExperimentPlotter(analysis)
@@ -37,6 +41,8 @@ def test_plot_single_target_both_axis(analysis):
         "plot_type": "line",
         "target_x_axis_label": "Epochs",
         "target_y_axis_label": "Values",
+        "sharex": True,
+        "sharey": False
     }
 
     plotter = ExperimentPlotter(analysis)
@@ -68,7 +74,7 @@ def test_plot_line(analysis):
     }
 
     plotter = ExperimentPlotter(analysis)
-    plotter.plot(targets, anchors, x_axis, y_axis, show_fig=False, **kwargs)
+    plotter.plot(targets, anchors, x_axis, y_axis, show_fig=True, **kwargs)
 
 
 def test_plot_line_multiple_analysis(analysis_list):
