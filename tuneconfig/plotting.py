@@ -27,6 +27,7 @@ class ExperimentPlotter:
                 self._plot(exp_analysis, targets, anchors, x_axis, y_axis, **kwargs)
         else:
             self._plot(self.analysis, targets, anchors, x_axis, y_axis, **kwargs)
+
         # save figure
         if filename:
             self._fig.savefig(filename, format="pdf")
@@ -76,7 +77,7 @@ class ExperimentPlotter:
         nrows, ncols = len(ys), len(xs)
         if nrows == ncols == 0:
             ncols = len(targets)
-            nrows = 0
+            nrows = 1
         else:
             ncols = ncols if ncols > 0 else len(targets)
             nrows = nrows if nrows > 0 else len(targets)
@@ -87,7 +88,7 @@ class ExperimentPlotter:
         else:
             figsize = kwargs.get("figsize", (7, 5))
             fig, axes = plt.subplots(
-                nrows, ncols, sharex=True, sharey=False, figsize=figsize
+                nrows, ncols, sharex=True, sharey=False, squeeze=False, figsize=figsize
             )
             self._fig, self._axes = fig, axes
 
@@ -113,10 +114,11 @@ class ExperimentPlotter:
                 elif not x_axis and not y_axis:
                     for k, metric in enumerate(metrics):
                         kwargs["axis_"] = (0, k, 1, len(metrics))
-                        plot_fn(axes[k], x, y, x_axis, y_axis, metric, **kwargs)
+                        plot_fn(axes[0][k], x, y, x_axis, y_axis, metric, **kwargs)
                 else:
                     kwargs["axis_"] = (i, j, len(trial_grid[x]), len(trial_grid))
-                    plot_fn(axes[i][j], x, y, x_axis, y_axis, metric, **kwargs)
+                    for metric in metrics:
+                        plot_fn(axes[i][j], x, y, x_axis, y_axis, metric, **kwargs)
 
     def _plot_line(self, ax, x, y, x_axis, y_axis, metric, **kwargs):
         label, df = metric
