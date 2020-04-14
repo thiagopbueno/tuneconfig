@@ -13,6 +13,33 @@ class ExperimentAnalysis:
 
     """
 
+    RESULT_METRIC_SEPARATOR = ":"
+    TRANSFORM_TARGET_SEPARATOR = "/"
+
+    @classmethod
+    def split_target(cls, target):
+        transform = None
+        if cls.TRANSFORM_TARGET_SEPARATOR in target:
+            transform, target = target.split(cls.TRANSFORM_TARGET_SEPARATOR)
+        result, metric = target.split(cls.RESULT_METRIC_SEPARATOR)
+        return result, metric, transform
+
+    @classmethod
+    def get_target_stats(cls, target, trial):
+        result, metric, transform = cls.split_target(target)
+
+        data = []
+        for results in trial.runs.values():
+            df = results[result][metric]
+            data.append(Trial._transform_metric(df, transform))
+
+        data = pd.concat(data)
+        data = data.groupby(data.index, sort=False).agg(
+            ["min", "max", "mean", "std"]
+        )
+
+        return data
+
     def __init__(self, logdir, name=None):
         self.logdir = logdir
         self.name = name
