@@ -1,4 +1,6 @@
 from collections import defaultdict
+import os
+import re
 
 from tuneconfig.analysis import ExperimentAnalysis
 
@@ -18,6 +20,8 @@ class TrialGrid:
 
         for analysis_id, trials in self._trials.items():
             for name, trial in trials.items():
+                name = name.replace(analysis_id, "")
+
                 metrics = {
                     target: ExperimentAnalysis.get_target_stats(target, trial)
                     for target in targets
@@ -28,6 +32,35 @@ class TrialGrid:
                 self._grid[y][x].append((analysis_id, name, trial, metrics))
 
         return self._grid
+
+    def traverse(self):
+        for j, y_value in enumerate(self._grid):
+            for i , x_value in enumerate(self._grid[y_value]):
+                plots = self._grid[y_value][x_value]
+                prefix = os.path.commonpath([x[0] for x in plots])
+
+                commonconfig = set(plots[0][1].split("/"))
+                for _, trial_name, _, _ in plots[1:]:
+                    config = set(trial_name.split("/"))
+                    commonconfig &= config
+
+                params_values = [x_value, y_value]
+                params_values.extend(list(commonconfig))
+                params_values = sorted(filter(None, params_values))
+
+                for analysis_logdir, trial_name, trial, metrics in plots:
+                    analysis_id = analysis_logdir.replace(prefix, "")[1:]
+
+                    for s in params_values:
+                        trial_name = trial_name.replace(s, "")
+                    trial_id = re.sub(r"/+", "", trial_name)
+
+                    for metric, df in metrics.items():
+                        yield (
+                            (j, i, y_value, x_value),
+                            (analysis_id, trial_id, metric),
+                            df
+                        )
 
     @property
     def shape(self):
