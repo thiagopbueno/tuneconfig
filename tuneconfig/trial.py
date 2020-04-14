@@ -84,7 +84,7 @@ class Trial:
         return Trial(dirname, config, runs)
 
     def __str__(self):
-        return f"Trial(logdir='{self.logdir}'"
+        return f"Trial(logdir={self.logdir})"
 
     def __len__(self):
         return len(self.runs)
