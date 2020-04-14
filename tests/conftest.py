@@ -36,10 +36,10 @@ def exec_func(config):
 def config_factory():
     def format_fn(param):
         fmt = {
-            "batch_size": "batch",
-            "horizon": "hr",
-            "learning_rate": "lr",
-            "optimizer": "opt",
+            # "batch_size": "batch",
+            # "horizon": "hr",
+            # "learning_rate": "lr",
+            # "optimizer": "opt",
             "num_samples": None
         }
         return fmt.get(param, param)
