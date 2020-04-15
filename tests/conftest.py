@@ -1,4 +1,5 @@
 import os
+from collections import namedtuple
 import random
 import shutil
 
@@ -7,6 +8,9 @@ import pandas as pd
 import pytest
 
 from tuneconfig import *
+
+
+PlotConfig = namedtuple("PlotConfig", "targets x_axis y_axis anchors")
 
 
 def exec_func(config):
@@ -99,3 +103,83 @@ def analysis_list(config_factory):
 
     for analysis in analyses:
         shutil.rmtree(analysis.logdir)
+
+
+@pytest.fixture(scope="session")
+def cfg_single_target_no_axes():
+    targets = ["metric:test"]
+    x_axis, y_axis = None, None
+    anchors = ["batch_size=32", "learning_rate=0.1", "optimizer=Adam"]
+    return PlotConfig(targets, x_axis, y_axis, anchors)
+
+
+@pytest.fixture(scope="session")
+def cfg_multiple_targets_no_axes():
+    targets = ["data:foo", "data:baz"]
+    x_axis, y_axis = None, None
+    anchors = ["batch_size=32", "learning_rate=0.1", "optimizer=Adam"]
+    return PlotConfig(targets, x_axis, y_axis, anchors)
+
+
+@pytest.fixture(scope="session")
+def cfg_single_target_multiple_plots_no_axes():
+    targets = ["metric:test"]
+    x_axis, y_axis = None, None
+    anchors = ["batch_size=32", "learning_rate=0.1"]
+    return PlotConfig(targets, x_axis, y_axis, anchors)
+
+
+@pytest.fixture(scope="session")
+def cfg_multiple_targets_multiple_plots_no_axes():
+    targets = ["data:foo", "data:baz"]
+    x_axis, y_axis = None, None
+    anchors = ["batch_size=32", "learning_rate=0.1"]
+    return PlotConfig(targets, x_axis, y_axis, anchors)
+
+
+@pytest.fixture(scope="session")
+def cfg_single_target_x_axis():
+    targets = ["metric:test"]
+    x_axis, y_axis = "optimizer", None
+    anchors = ["batch_size=32", "learning_rate=0.1"]
+    return PlotConfig(targets, x_axis, y_axis, anchors)
+
+
+@pytest.fixture(scope="session")
+def cfg_multiple_targets_x_axis():
+    targets = ["data:foo", "data:baz"]
+    x_axis, y_axis = "optimizer", None
+    anchors = ["batch_size=32", "learning_rate=0.1"]
+    return PlotConfig(targets, x_axis, y_axis, anchors)
+
+
+@pytest.fixture(scope="session")
+def cfg_single_target_y_axis():
+    targets = ["metric:test"]
+    x_axis, y_axis = None, "batch_size"
+    anchors = ["learning_rate=0.1", "optimizer=Adam"]
+    return PlotConfig(targets, x_axis, y_axis, anchors)
+
+
+@pytest.fixture(scope="session")
+def cfg_multiple_targets_y_axis():
+    targets = ["data:foo", "data:baz"]
+    x_axis, y_axis = None, "batch_size"
+    anchors = ["learning_rate=0.1", "optimizer=Adam"]
+    return PlotConfig(targets, x_axis, y_axis, anchors)
+
+
+@pytest.fixture(scope="session")
+def cfg_single_target_both_axis():
+    targets = ["metric:test"]
+    x_axis, y_axis = "optimizer", "learning_rate"
+    anchors = ["batch_size=128"]
+    return PlotConfig(targets, x_axis, y_axis, anchors)
+
+
+@pytest.fixture(scope="session")
+def cfg_multiple_targets_both_axis():
+    targets = ["data:foo", "data:baz"]
+    x_axis, y_axis = "optimizer", "learning_rate"
+    anchors = ["batch_size=128"]
+    return PlotConfig(targets, x_axis, y_axis, anchors)
