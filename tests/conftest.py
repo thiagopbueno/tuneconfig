@@ -1,5 +1,6 @@
 import os
 from collections import namedtuple
+import itertools
 import random
 import shutil
 
@@ -19,17 +20,19 @@ def exec_func(config):
     del config["logdir"]
     os.makedirs(logdir)
 
-    df = pd.DataFrame({
-        "foo": pd.Series([random.gauss(10.0, 1.0) for _ in range(10)]),
-        "baz": pd.Series([random.gauss(20.0, 2.0) for _ in range(10)]),
-        "bar": pd.Series([random.gauss(30.0, 3.0) for _ in range(10)]),
-    })
+    df = pd.DataFrame(
+        {
+            "foo": pd.Series([random.gauss(10.0, 1.0) for _ in range(10)]),
+            "baz": pd.Series([random.gauss(20.0, 2.0) for _ in range(10)]),
+            "bar": pd.Series([random.gauss(30.0, 3.0) for _ in range(10)]),
+        }
+    )
     filepath = os.path.join(logdir, "data.csv")
     df.to_csv(filepath, index=False)
 
-    df = pd.DataFrame({
-        "test": pd.Series([random.randrange(-10.0, 10.0) for _ in range(10)]),
-    })
+    df = pd.DataFrame(
+        {"test": pd.Series([random.randrange(-10.0, 10.0) for _ in range(10)]),}
+    )
     filepath = os.path.join(logdir, "metric.csv")
     df.to_csv(filepath, index=False)
 
@@ -48,13 +51,14 @@ def config_factory():
         }
         return fmt.get(param, param)
 
-    return ConfigFactory({
-        "batch_size": grid_search([32, 64, 128]),
-        "horizon": 40,
-        "learning_rate": grid_search([0.01, 0.1]),
-        "epochs": 1000,
-        "optimizer": grid_search(["Adam", "RMSProp", "GradientDescent"]),
-        "num_samples": 10
+    return ConfigFactory(
+        {
+            "batch_size": grid_search([32, 64, 128]),
+            "horizon": 40,
+            "learning_rate": grid_search([0.01, 0.1]),
+            "epochs": 1000,
+            "optimizer": grid_search(["Adam", "RMSProp", "GradientDescent"]),
+            "num_samples": 10,
         },
         format_fn=format_fn,
     )
@@ -103,6 +107,45 @@ def analysis_list(config_factory):
 
     for analysis in analyses:
         shutil.rmtree(analysis.logdir)
+
+
+def confplot_idfn(fixture_value):
+    return "_".join(filter(None, fixture_value))
+
+
+@pytest.fixture(
+    scope="module",
+    params=list(
+        itertools.product(
+            ["single_target", "multiple_targets"],
+            ["single_plot", "multiple_plots"],
+            ["x_axis", None],
+            ["y_axis", None],
+        )
+    ),
+    ids=confplot_idfn,
+)
+def confplot(request):
+    target_type, plot_type, x_axis, y_axis = request.param
+
+    if target_type == "single_target":
+        targets = ["metric:test"]
+    else:
+        targets = ["data:foo", "data:bar"]
+
+    anchors = ["learning_rate=0.1", "horizon=40", "epochs=1000"]
+
+    if x_axis:
+        x_axis = "optimizer"
+        if plot_type == "single_plot":
+            anchors.append("batch_size=32")
+
+    if y_axis:
+        y_axis = "batch_size"
+        if plot_type == "single_plot":
+            anchors.append("optimizer=Adam")
+
+    return PlotConfig(targets, x_axis, y_axis, anchors)
 
 
 @pytest.fixture(scope="session")
