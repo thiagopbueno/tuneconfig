@@ -33,7 +33,7 @@ def format_fn(param):
     return fmt.get(param, param)
 
 # Define a configuration template for grid search
-config_iterator = tuneconfig.TuneConfig({
+config_iterator = tuneconfig.ConfigFactory({
     "batch_size": tuneconfig.grid_search([32, 128]),
     "horizon": 40,
     "learning_rate": tuneconfig.grid_search([0.01, 0.1]),
