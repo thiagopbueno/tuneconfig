@@ -22,9 +22,17 @@ class ExperimentPlotter:
         fig.suptitle(", ".join(anchors))
 
         for pos, ids, df in self.grid.traverse():
-            j, i, y_value, x_value = pos
+            j, i, y_value, x_value, commonconfig = pos
             analysis_id, trial_id, metric = ids
             ax = axes[j][i]
+
+            title = set(commonconfig) - set(anchors) - set([x_value, y_value])
+            ax.set_title(", ".join(sorted(title)), fontweight="bold")
+            if j == nrows - 1:
+                ax.set_xlabel(x_value, fontweight="bold")
+            if i == 0:
+                ax.set_ylabel(y_value, fontweight="bold")
+
             self._plot(ax, df, analysis_id, trial_id, metric)
 
         return fig
@@ -36,6 +44,7 @@ class ExperimentPlotter:
 
         xs = range(len(mean))
         label = "/".join(filter(None, [analysis_id, trial_id]))
+        label = re.sub(r"/{2,}", "/", label)
         label = f"{label}::{metric}"
 
         ax.plot(xs, mean, label=label)
