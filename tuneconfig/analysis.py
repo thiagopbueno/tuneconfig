@@ -31,7 +31,8 @@ class ExperimentAnalysis:
         data = []
         for results in trial.runs.values():
             df = results[result][metric]
-            data.append(Trial._transform_metric(df, transform))
+            rslt = Trial._transform_metric(df, transform)
+            data.append(rslt)
 
         data = pd.concat(data)
         data = data.groupby(data.index, sort=False).agg(

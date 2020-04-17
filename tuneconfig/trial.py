@@ -2,6 +2,7 @@ from collections import defaultdict
 import json
 import os
 
+import numpy as np
 import pandas as pd
 
 from tuneconfig.experiment import Experiment
@@ -63,7 +64,10 @@ class Trial:
             return df
         if not hasattr(df, transform):
             return ValueError(f"Invalid transform function '{transform}'.")
-        return getattr(df, transform)()
+        rslt = getattr(df, transform)()
+        if np.isscalar(rslt):
+            rslt = pd.Series(rslt)
+        return rslt
 
     @classmethod
     def from_directory(cls, dirname):
