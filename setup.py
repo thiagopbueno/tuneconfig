@@ -10,7 +10,7 @@ def read(filename):
 
 setup(
     name="tuneconfig",
-    version="v0.10.0",
+    version="v0.11.0",
     author="Thiago P. Bueno",
     author_email="thiago.pbueno@gmail.com",
     description="Hyperparameter config file generator.",

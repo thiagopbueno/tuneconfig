@@ -27,3 +27,14 @@ def test_line_plot(plotter, confplot):
     # plt.show()
     fig.clear()
     plt.close(fig)
+
+
+def test_bar_plot(plotter, confplot):
+    plotter.kwargs["plot_type"] = "bar"
+    targets, x_axis, y_axis, anchors = confplot
+    targets = [f"mean/{target}" for target in targets]
+    fig = plotter.plot(targets, x_axis, y_axis, anchors)
+    assert isinstance(fig, plt.Figure)
+    # plt.show()
+    fig.clear()
+    plt.close(fig)
