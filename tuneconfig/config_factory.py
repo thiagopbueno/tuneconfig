@@ -129,18 +129,21 @@ class ConfigFactory:
     def from_dict(cls, config_dict, format_fn=None):
         def _get_params_iterator(value):
             valid_params_iterators = ["__grid_search__"]
-            if (
-                not isinstance(value, list)
-                or len(value) == 0
-                or value[0] not in valid_params_iterators
-            ):
-                return value
 
-            if value[0] == "__grid_search__":
-                assert isinstance(value[1], list)
-                return grid_search(value[1])
+            if not isinstance(value, list):
+                return value
             else:
-                raise ValueError(f"Not a valid ParamsIterator: '{values}'.")
+                if not value or value[0] not in valid_params_iterators:
+                    return tuple(value)
+                elif value[0] == "__grid_search__":
+                    assert len(value) == 2
+                    assert isinstance(value[1], list)
+                    return grid_search([
+                        tuple(val) if isinstance(val, list) else val
+                        for val in value[1]
+                    ])
+                else:
+                    raise ValueError(f"Not a valid ParamsIterator: '{value}'.")
 
         return ConfigFactory(
             {

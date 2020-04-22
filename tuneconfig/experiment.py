@@ -1,7 +1,6 @@
 import itertools
 import multiprocessing as mp
 import os
-import pandas as pd
 import re
 
 from tqdm import tqdm

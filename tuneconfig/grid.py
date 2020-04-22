@@ -10,7 +10,7 @@ def _get_trial_id(commonconfig, x, y, trial_name):
     param_values = filter(None, param_values)
     trial_id = trial_name
     for param_value in param_values:
-        trial_id = trial_id.replace(param_value, "")
+        trial_id = trial_id.replace(str(param_value), "")
     trial_id = re.sub(r"/{2,}", "/", trial_id)
     if trial_id.startswith("/"):
         trial_id = trial_id[1:]
@@ -81,6 +81,9 @@ class TrialGrid:
         return self
 
     def build(self, targets, x_axis=None, y_axis=None):
+        self.x_axis = x_axis
+        self.y_axis = y_axis
+
         self._grid = defaultdict(lambda: defaultdict(list))
 
         for analysis_id, trials in self._trials.items():
@@ -92,9 +95,12 @@ class TrialGrid:
                     for target in targets
                 }
 
-                x = f"{x_axis}={trial.config.get(x_axis)}" if x_axis else None
-                y = f"{y_axis}={trial.config.get(y_axis)}" if y_axis else None
-                self._grid[y][x].append((analysis_id, name, trial, metrics))
+                x = trial.config.get(x_axis)
+                y = trial.config.get(y_axis)
+                x_label = f"{x_axis}={x}" if x_axis else None
+                y_label = f"{y_axis}={y}" if y_axis else None
+                self._grid[(y, y_label)][(x, x_label)].append(
+                    (analysis_id, name, trial, metrics))
 
         self._build_cell_index()
 
@@ -107,8 +113,17 @@ class TrialGrid:
                 self._cell_idx[(y, x)] = TrialGridCell(x, y, plots)
 
     def traverse(self):
-        for j, y in enumerate(self._grid):
-            for i, x in enumerate(self._grid[y]):
+        def sort_grid_key(key):
+            if not key:
+                return key
+            return key[0]
+
+        y_values = sorted(self._grid, key=sort_grid_key)
+
+        for j, y in enumerate(y_values):
+            x_values = sorted(self._grid[y], key=sort_grid_key)
+
+            for i, x in enumerate(x_values):
                 plots = self._grid[y][x]
 
                 prefix = os.path.commonpath([x[0] for x in plots])

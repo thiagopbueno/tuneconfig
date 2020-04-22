@@ -40,12 +40,15 @@ class ExperimentPlotter:
             analysis_id, trial_id, metric = ids
             ax = axes[j][i]
 
-            title = set(commonconfig) - set(anchors) - set([x, y])
+            x_label = x[1] if x else None
+            y_label = y[1] if y else None
+
+            title = set(commonconfig) - set(anchors) - set([x_label, y_label])
             ax.set_title(", ".join(sorted(title)), fontweight="bold")
             if j == nrows - 1:
-                ax.set_xlabel(x, fontweight="bold")
+                ax.set_xlabel(x_label, fontweight="bold")
             if i == 0:
-                ax.set_ylabel(y, fontweight="bold")
+                ax.set_ylabel(y_label, fontweight="bold")
 
             label, index = self._get_plot_label_idx(x, y, *ids)
             self._plot(ax, df, label, index, **fmt_kwargs)
