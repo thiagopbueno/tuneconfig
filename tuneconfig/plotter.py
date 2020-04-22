@@ -1,4 +1,5 @@
 import os
+import json
 import re
 
 import matplotlib.pyplot as plt
@@ -81,3 +82,12 @@ class ExperimentPlotter:
         ax.bar([x], mean, width, yerr=std, capsize=10, label=label, alpha=0.45)
         ax.set_xticklabels([])
         ax.legend()
+
+    def plot_chart_from_spec(self, config_path, show_fig=True, filename=None):
+        with open(config_path, "r") as file:
+            config = json.load(file)
+        fig = self.plot(**config)
+        if filename:
+            fig.savefig(filename)
+        if show_fig:
+            plt.show()
