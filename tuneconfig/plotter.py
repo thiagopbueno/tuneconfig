@@ -31,7 +31,11 @@ class ExperimentPlotter:
 
         nrows, ncols = self.grid.shape
         fig, axes = plt.subplots(
-            nrows, ncols, squeeze=False, figsize=fmt_kwargs.get("figsize")
+            nrows, ncols,
+            squeeze=False,
+            figsize=fmt_kwargs.get("figsize"),
+            sharex=fmt_kwargs.get("sharex", False),
+            sharey=fmt_kwargs.get("sharey", False),
         )
         fig.suptitle(", ".join(anchors), fontweight="bold")
 
