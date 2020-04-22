@@ -5,6 +5,27 @@ import re
 from tuneconfig.analysis import ExperimentAnalysis
 
 
+def _get_trial_id(commonconfig, x, y, trial_name):
+    param_values = set(commonconfig) | set([x, y])
+    param_values = filter(None, param_values)
+    trial_id = trial_name
+    for param_value in param_values:
+        trial_id = trial_id.replace(param_value, "")
+    trial_id = re.sub(r"/{2,}", "/", trial_id)
+    if trial_id.startswith("/"):
+        trial_id = trial_id[1:]
+    if trial_id.endswith("/"):
+        trial_id = trial_id[:-1]
+    return trial_id
+
+
+def _get_commonconfig(plots):
+    commonconfig = set(filter(None, plots[0][1].split("/")))
+    for _, trial_name, _, _ in plots[1:]:
+        commonconfig &= set(trial_name.split("/"))
+    return sorted(commonconfig)
+
+
 class TrialGridCell:
     def __init__(self, x, y, plots):
         self.x = x
@@ -20,23 +41,14 @@ class TrialGridCell:
 
     def _build_idx(self):
         prefix = os.path.commonpath([x[0] for x in self.plots])
-
-        commonconfig = set(filter(None, self.plots[0][1].split("/")))
-        for _, trial_name, _, _ in self.plots[1:]:
-            config = set(trial_name.split("/"))
-            commonconfig &= config
-        commonconfig = sorted(commonconfig)
+        commonconfig = _get_commonconfig(self.plots)
 
         idx = 0
         for analysis_logdir, trial_name, trial, metrics in self.plots:
             analysis_id = analysis_logdir.replace(prefix, "")[1:]
             self.analyses.add(analysis_id)
 
-            trial_name = set(trial_name.split("/"))
-            xy_values = set([self.x, self.y])
-            trial_id = trial_name - set(commonconfig) - xy_values
-            trial_id = "/".join(sorted(trial_id))
-
+            trial_id = _get_trial_id(commonconfig, self.x, self.y, trial_name)
             self.trials.add(trial_id)
 
             for metric in metrics:
@@ -63,7 +75,8 @@ class TrialGrid:
 
     def select(self, anchors):
         self._trials = {
-            analysis.logdir: analysis.get(anchors) for analysis in self.analyses
+            analysis.logdir: analysis.get(anchors)
+            for analysis in self.analyses
         }
         return self
 
@@ -94,28 +107,20 @@ class TrialGrid:
                 self._cell_idx[(y, x)] = TrialGridCell(x, y, plots)
 
     def traverse(self):
-        for j, y_value in enumerate(self._grid):
-            for i, x_value in enumerate(self._grid[y_value]):
-                plots = self._grid[y_value][x_value]
-                prefix = os.path.commonpath([x[0] for x in plots])
+        for j, y in enumerate(self._grid):
+            for i, x in enumerate(self._grid[y]):
+                plots = self._grid[y][x]
 
-                commonconfig = set(filter(None, plots[0][1].split("/")))
-                for _, trial_name, _, _ in plots[1:]:
-                    config = set(trial_name.split("/"))
-                    commonconfig &= config
-                commonconfig = sorted(commonconfig)
+                prefix = os.path.commonpath([x[0] for x in plots])
+                commonconfig = _get_commonconfig(plots)
 
                 for analysis_logdir, trial_name, trial, metrics in plots:
                     analysis_id = analysis_logdir.replace(prefix, "")[1:]
-
-                    trial_name = set(trial_name.split("/"))
-                    xy_values = set([x_value, y_value])
-                    trial_id = trial_name - set(commonconfig) - xy_values
-                    trial_id = "/".join(sorted(trial_id))
+                    trial_id = _get_trial_id(commonconfig, x, y, trial_name)
 
                     for metric, df in metrics.items():
                         yield (
-                            (j, i, y_value, x_value, commonconfig),
+                            (j, i, y, x, commonconfig),
                             (analysis_id, trial_id, metric),
                             df,
                         )
