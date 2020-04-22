@@ -15,7 +15,7 @@ class ExperimentPlotter:
 
     Args:
         analysis (ExperimentAnalysis): (required) analysis object.
-        analyses (List(ExperimentAnalysis): (optional) list of analysis objects.
+        analyses (List(ExperimentAnalysis)): (optional) list of analysis objects.
     """
 
     def __init__(self, analysis, *analyses, **kwargs):
@@ -23,12 +23,15 @@ class ExperimentPlotter:
         self.grid = TrialGrid(*self.analyses)
         self.kwargs = kwargs
 
-    def plot(self, targets, x_axis=None, y_axis=None, anchors=None):
+    def plot(self, targets, x_axis=None, y_axis=None, anchors=None, **kwargs):
+        fmt_kwargs = self.kwargs.copy()
+        fmt_kwargs.update(kwargs)
+
         trial_grid = self.grid.select(anchors).build(targets, x_axis, y_axis)
 
         nrows, ncols = self.grid.shape
         fig, axes = plt.subplots(
-            nrows, ncols, squeeze=False, figsize=self.kwargs.get("figsize")
+            nrows, ncols, squeeze=False, figsize=fmt_kwargs.get("figsize")
         )
         fig.suptitle(", ".join(anchors), fontweight="bold")
 
@@ -44,44 +47,41 @@ class ExperimentPlotter:
             if i == 0:
                 ax.set_ylabel(y, fontweight="bold")
 
-            self._plot(ax, df, analysis_id, trial_id, metric, x, y)
+            label, index = self._get_plot_label_idx(x, y, *ids)
+            self._plot(ax, df, label, index, **fmt_kwargs)
 
         return fig
 
-    def _plot(self, ax, df, analysis_id, trial_id, metric, x, y):
-        plot_type = self.kwargs["plot_type"]
-
+    def _plot(self, ax, df, label, index, **kwargs):
+        plot_type = kwargs["plot_type"]
         plot_fn = getattr(self, f"_plot_{plot_type}")
-        plot_fn(ax, df, analysis_id, trial_id, metric, x, y)
+        plot_fn(ax, df, label, index, **kwargs)
 
-    def _plot_line(self, ax, df, analysis_id, trial_id, metric, x, y):
+    def _plot_line(self, ax, df, label, index, **kwargs):
         mean, std = df["mean"], df["std"]
         lower = mean - std
         upper = mean + std
 
         xs = range(len(mean))
-        label = "/".join(filter(None, [analysis_id, trial_id]))
-        label = re.sub(r"/{2,}", "/", label)
-        label = f"{label}::{metric}"
-
         ax.plot(xs, mean, label=label)
         ax.fill_between(xs, lower, upper, alpha=0.25)
         ax.grid()
         ax.legend()
 
-    def _plot_bar(self, ax, df, analysis_id, trial_id, metric, x, y):
+    def _plot_bar(self, ax, df, label, index, **kwargs):
         mean, std = df["mean"], df["std"]
-
-        label = "/".join(filter(None, [analysis_id, trial_id]))
-        label = re.sub(r"/{2,}", "/", label)
-        label = f"{label}::{metric}"
-
-        index = self.grid.get(x, y).index(analysis_id, trial_id, metric)
         x = index * 0.5
         width = 0.35
         ax.bar([x], mean, width, yerr=std, capsize=10, label=label, alpha=0.45)
         ax.set_xticklabels([])
         ax.legend()
+
+    def _get_plot_label_idx(self, x, y, analysis_id, trial_id, metric):
+        label = "/".join(filter(None, [analysis_id, trial_id]))
+        label = re.sub(r"/{2,}", "/", label)
+        label = f"{metric} @ {label}"
+        index = self.grid.get(x, y).index(analysis_id, trial_id, metric)
+        return label, index
 
     def plot_chart_from_spec(self, config_path, show_fig=True, filename=None):
         with open(config_path, "r") as file:
