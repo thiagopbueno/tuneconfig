@@ -95,11 +95,19 @@ class TrialGrid:
                     for target in targets
                 }
 
-                x = trial.config.get(x_axis)
-                y = trial.config.get(y_axis)
-                x_label = f"{x_axis}={x}" if x_axis else None
-                y_label = f"{y_axis}={y}" if y_axis else None
-                self._grid[(y, y_label)][(x, x_label)].append(
+                x_id = None
+                if x_axis:
+                    x = trial.config.get(x_axis)
+                    x_label = f"{x_axis}={x}"
+                    x_id = (x, x_label)
+
+                y_id = None
+                if y_axis:
+                    y = trial.config.get(y_axis)
+                    y_label = f"{y_axis}={y}" if y_axis else None
+                    y_id = (y, y_label)
+
+                self._grid[y_id][x_id].append(
                     (analysis_id, name, trial, metrics))
 
         self._build_cell_index()
