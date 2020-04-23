@@ -85,6 +85,8 @@ class ExperimentAnalysis:
                 self._trials[dirname] = trial
 
                 for key, value in trial.config.items():
+                    if isinstance(value, list):
+                        value = tuple(value)
                     self._params[key].add(value)
 
     def get(self, params_values):
