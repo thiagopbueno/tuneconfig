@@ -35,28 +35,39 @@ class Trial:
             df.info()
 
     def describe(self):
-        for result, df in self.stats().items():
+        for result, df in self.get_all_stats().items():
             print(f">> Stats for '{result}' :")
             print(df)
             print()
 
-    def stats(self, result=None, transform=None):
-        stats_ = defaultdict(list)
+    def get_all_data(self, transform=None):
+        return {
+            result: self.get_data(result, transform)
+            for result in self.results
+        }
 
-        for run, results in self.runs.items():
-            for filename, df in results.items():
-                if result and filename != result:
-                    continue
-                df = self._transform_metric(df, transform)
-                stats_[filename].append(df)
+    def get_data(self, result, transform=None):
+        data = []
+        for results in self.runs.values():
+            df = results[result]
+            values = self._transform_metric(df, transform)
+            data.append(values)
+        return data
 
-        for filename, data in stats_.items():
-            data = pd.concat(data)
-            stats_[filename] = data.groupby(data.index, sort=False).agg(
-                ["min", "max", "mean", "std"]
-            )
+    def get_all_stats(self, transform=None):
+        stats = defaultdict(pd.DataFrame)
+        for results in self.runs.values():
+            for result in results:
+                result_stats = self.get_stats(result, transform)
+                stats[result] = stats[result].append(
+                    result_stats, ignore_index=True)
+        return stats
 
-        return stats_
+    def get_stats(self, result, transform=None):
+        data = self.get_data(result, transform)
+        df = pd.concat(data)
+        df = df.groupby(df.index, sort=False)
+        return df.agg(["min", "max", "mean", "std"])
 
     @staticmethod
     def _transform_metric(df, transform):

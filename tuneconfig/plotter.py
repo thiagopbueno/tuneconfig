@@ -72,6 +72,8 @@ class ExperimentPlotter:
         xs = range(len(mean))
         ax.plot(xs, mean, label=label)
         ax.fill_between(xs, lower, upper, alpha=0.25)
+        ax.set_xscale(kwargs.get("xscale", "linear"))
+        ax.set_yscale(kwargs.get("yscale", "linear"))
         ax.grid()
         ax.legend()
 

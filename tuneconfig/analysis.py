@@ -27,19 +27,8 @@ class ExperimentAnalysis:
     @classmethod
     def get_target_stats(cls, target, trial):
         result, metric, transform = cls.split_target(target)
-
-        data = []
-        for results in trial.runs.values():
-            df = results[result][metric]
-            rslt = Trial._transform_metric(df, transform)
-            data.append(rslt)
-
-        data = pd.concat(data)
-        data = data.groupby(data.index, sort=False).agg(
-            ["min", "max", "mean", "std"]
-        )
-
-        return data
+        stats = trial.get_stats(result, transform=transform)
+        return stats[metric] if metric in stats.columns else stats.loc[metric]
 
     def __init__(self, logdir, name=None):
         self.logdir = logdir
