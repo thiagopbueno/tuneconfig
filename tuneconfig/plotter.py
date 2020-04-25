@@ -27,7 +27,8 @@ class ExperimentPlotter:
         fmt_kwargs = self.kwargs.copy()
         fmt_kwargs.update(kwargs)
 
-        trial_grid = self.grid.select(anchors).build(targets, x_axis, y_axis)
+        aggregate = kwargs.get("aggregate", True)
+        trial_grid = self.grid.select(anchors).build(targets, x_axis, y_axis, aggregate)
 
         nrows, ncols = self.grid.shape
         fig, axes = plt.subplots(
@@ -37,22 +38,34 @@ class ExperimentPlotter:
             sharex=fmt_kwargs.get("sharex", False),
             sharey=fmt_kwargs.get("sharey", False),
         )
-        fig.suptitle(", ".join(anchors), fontweight="bold")
+
+        suptitle = None
+        for pos, _, _ in self.grid.traverse():
+            commonconfig = pos[-1]
+            if not suptitle:
+                suptitle = set(commonconfig)
+            else:
+                suptitle &= set(commonconfig)
+        fig.suptitle(", ".join(sorted(suptitle)), fontweight="bold")
 
         for pos, ids, df in self.grid.traverse():
             j, i, y, x, commonconfig = pos
             analysis_id, trial_id, metric = ids
             ax = axes[j][i]
 
-            x_label = x[1] if x else None
-            y_label = y[1] if y else None
+            xy_values = set()
+            if x:
+                xy_values.add(x[1])
+            if y:
+                xy_values.add(y[1])
+            ax.set_title(", ".join(sorted(xy_values)), fontweight="bold")
 
-            title = set(commonconfig) - set(anchors) - set([x_label, y_label])
-            ax.set_title(", ".join(sorted(title)), fontweight="bold")
             if j == nrows - 1:
-                ax.set_xlabel(x_label, fontweight="bold")
+                ax.set_xlabel(
+                    fmt_kwargs.get("target_x_axis_label"), fontweight="bold")
             if i == 0:
-                ax.set_ylabel(y_label, fontweight="bold")
+                ax.set_ylabel(
+                    fmt_kwargs.get("target_y_axis_label"), fontweight="bold")
 
             label, index = self._get_plot_label_idx(x, y, *ids)
             self._plot(ax, df, label, index, **fmt_kwargs)
@@ -84,6 +97,12 @@ class ExperimentPlotter:
         ax.bar([x], mean, width, yerr=std, capsize=10, label=label, alpha=0.45)
         ax.set_xticklabels([])
         ax.legend()
+
+    def _plot_boxplot(self, ax, data, label, index, **kwargs):
+        label = label[label.find("@") + 2:]
+        ax.boxplot(data, positions=[index], labels=[label],
+                   showmeans=True, meanline=True, showfliers=False)
+        ax.grid()
 
     def _get_plot_label_idx(self, x, y, analysis_id, trial_id, metric):
         label = "/".join(filter(None, [analysis_id, trial_id]))

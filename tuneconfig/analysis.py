@@ -25,10 +25,14 @@ class ExperimentAnalysis:
         return result, metric, transform
 
     @classmethod
-    def get_target_stats(cls, target, trial):
+    def get_data(cls, trial, target, aggregate=True):
         result, metric, transform = cls.split_target(target)
-        stats = trial.get_stats(result, transform=transform)
-        return stats[metric] if metric in stats.columns else stats.loc[metric]
+        if aggregate:
+            data = trial.get_stats(result, transform=transform)
+            return data[metric] if metric in data.columns else data.loc[metric]
+        else:
+            data = trial.get_data(result, transform=transform)
+            return [df[metric] for df in data]
 
     def __init__(self, logdir, name=None):
         self.logdir = logdir

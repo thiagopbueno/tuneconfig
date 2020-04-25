@@ -26,6 +26,13 @@ def _get_commonconfig(plots):
     return sorted(commonconfig)
 
 
+def _get_metrics(trial, targets, aggregate):
+    return {
+        target: ExperimentAnalysis.get_data(trial, target, aggregate)
+        for target in targets
+    }
+
+
 class TrialGridCell:
     def __init__(self, x, y, plots):
         self.x = x
@@ -80,7 +87,7 @@ class TrialGrid:
         }
         return self
 
-    def build(self, targets, x_axis=None, y_axis=None):
+    def build(self, targets, x_axis=None, y_axis=None, aggregate=True):
         self.x_axis = x_axis
         self.y_axis = y_axis
 
@@ -89,11 +96,7 @@ class TrialGrid:
         for analysis_id, trials in self._trials.items():
             for name, trial in trials.items():
                 name = name.replace(analysis_id, "")
-
-                metrics = {
-                    target: ExperimentAnalysis.get_target_stats(target, trial)
-                    for target in targets
-                }
+                metrics = _get_metrics(trial, targets, aggregate)
 
                 x_id = None
                 if x_axis:
