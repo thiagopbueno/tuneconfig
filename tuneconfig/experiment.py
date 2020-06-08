@@ -1,3 +1,4 @@
+import contextlib
 import enum
 import itertools
 import multiprocessing as mp
@@ -5,7 +6,7 @@ import os
 import re
 import shutil
 
-from tqdm import tqdm
+from tqdm import tqdm, trange
 
 
 @enum.unique
@@ -84,6 +85,17 @@ class Experiment:
             pool.join()
 
         return results
+
+    @classmethod
+    @contextlib.contextmanager
+    def trange(cls, epochs, run_id, num_workers, unit="epoch", show_progress=True):
+        pid = os.getpid()
+        position = run_id % num_workers
+        desc = f"(pid={pid} Run #{run_id:<3d})"
+        disable = not show_progress
+
+        with trange(epochs, desc=desc, unit=unit, position=position, leave=False, disable=disable) as t:
+            yield t
 
     @classmethod
     def is_trial_dir(cls, dirname):
