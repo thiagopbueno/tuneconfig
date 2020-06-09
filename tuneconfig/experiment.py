@@ -88,10 +88,11 @@ class Experiment:
 
     @classmethod
     @contextlib.contextmanager
-    def trange(cls, epochs, run_id, num_workers, unit="epoch", show_progress=True):
+    def trange(cls, epochs, run_id, num_workers, unit="epoch", desc=None, show_progress=True):
         pid = os.getpid()
         position = run_id % num_workers
-        desc = f"(pid={pid} Run #{run_id:<3d})"
+        desc = f"/ {desc}" if desc else ""
+        desc = f"(pid={pid} Run #{run_id:<3d}{desc})"
         disable = not show_progress
 
         with trange(epochs, desc=desc, unit=unit, position=position, leave=False, disable=disable) as t:
