@@ -18,7 +18,9 @@ def exec_func(config):
     logdir = config["logdir"]
     run_id = logdir.split("/")[-1]
     del config["logdir"]
-    os.makedirs(logdir)
+
+    if not os.path.exists(logdir):
+        os.makedirs(logdir)
 
     df = pd.DataFrame(
         {
