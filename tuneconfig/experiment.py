@@ -69,10 +69,14 @@ class Experiment:
 
             trial_configs = []
             for i, j in enumerate(range_num_samples):
+                logdir = os.path.join(trial_dir, f"run{j}")
+                if not os.path.exists(logdir):
+                    os.makedirs(logdir)
+
                 trial_configs.append({
                     **config,
                     "run_id": j,
-                    "logdir": os.path.join(trial_dir, f"run{j}"),
+                    "logdir": logdir,
                 })
 
             pool = mp.Pool(
